@@ -1,28 +1,35 @@
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
 import { 
   NAVIGATION_ITEMS, 
-  getNavigationIcon, 
-  isActiveRoute 
+  getNavigationIcon
 } from "@/constants/navigation";
 
 export default function Sidebar() {
   const [currentPath, setLocation] = useLocation();
+  const [activeNavItem, setActiveNavItem] = useState(currentPath);
+
+  // 경로 변경 시 활성 아이템 동기화
+  useEffect(() => {
+    setActiveNavItem(currentPath);
+  }, [currentPath]);
 
   const handleNavigation = (href: string) => {
-    console.log('Sidebar navigation clicked:', href);
+    // 즉시 UI 상태 업데이트 (낙관적 업데이트)
+    setActiveNavItem(href);
     
-    // 즉시 URL 변경
-    window.history.pushState({}, '', href);
-    
-    // wouter에게 변경사항 알림
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    
-    // setLocation으로도 시도
+    // 네비게이션 실행
     setLocation(href);
-    
-    console.log('Navigation completed to:', href);
+  };
+
+  // 간단한 경로 매칭 함수
+  const isActive = (itemHref: string) => {
+    if (itemHref === '/') {
+      return activeNavItem === '/';
+    }
+    return activeNavItem.startsWith(itemHref);
   };
 
   const handleLogout = () => {
@@ -40,29 +47,21 @@ export default function Sidebar() {
           <div className="px-4 space-y-1">
             {NAVIGATION_ITEMS.map((item) => {
               const Icon = getNavigationIcon(item.icon);
-              const active = isActiveRoute(currentPath, item.href);
+              const active = isActive(item.href);
               
               return (
                 <button
                   key={item.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('Button clicked for:', item.name);
-                    handleNavigation(item.href);
-                  }}
+                  onClick={() => handleNavigation(item.href)}
                   className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors w-full text-left cursor-pointer hover:scale-[1.02]",
+                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 w-full text-left",
                     active 
-                      ? "bg-primary text-primary-foreground" 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
-                  // 접근성 속성들
                   aria-current={active ? "page" : undefined}
                   aria-label={item.ariaLabel}
                   title={item.description}
-                  // 키보드 네비게이션 지원
-                  tabIndex={0}
                   type="button"
                 >
                   <Icon 
