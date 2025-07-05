@@ -11,7 +11,13 @@ export default function Sidebar() {
   const [currentPath, setLocation] = useLocation();
 
   const handleNavigation = (href: string) => {
-    setLocation(href);
+    console.log('Sidebar navigation clicked:', href);
+    try {
+      setLocation(href);
+      console.log('Navigation successful to:', href);
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
   const handleLogout = () => {
@@ -34,9 +40,14 @@ export default function Sidebar() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => handleNavigation(item.href)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Button clicked for:', item.name);
+                    handleNavigation(item.href);
+                  }}
                   className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors w-full text-left",
+                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors w-full text-left cursor-pointer hover:scale-[1.02]",
                     active 
                       ? "bg-primary text-primary-foreground" 
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -47,6 +58,7 @@ export default function Sidebar() {
                   title={item.description}
                   // 키보드 네비게이션 지원
                   tabIndex={0}
+                  type="button"
                 >
                   <Icon 
                     className="w-5 h-5 mr-3" 
