@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { 
   BarChart3, 
@@ -9,18 +9,20 @@ import {
   Settings,
   LogOut
 } from "lucide-react";
+import { useNavigation } from "@/hooks/useNavigation";
 
-const navigation = [
-  { name: "주식 날씨 예보", href: "/", icon: Cloud },
-  { name: "내 포트폴리오", href: "/portfolio", icon: Briefcase },
-  { name: "종목 분석", href: "/analysis", icon: ChartBar },
-  { name: "시장 날씨", href: "/weather", icon: BarChart3 },
-  { name: "공시정보", href: "/dart", icon: FileText },
-  { name: "설정", href: "/settings", icon: Settings },
-];
+// 아이콘 매핑
+const iconMap = {
+  Cloud,
+  Briefcase,
+  ChartBar,
+  BarChart3,
+  FileText,
+  Settings,
+};
 
 export default function Sidebar() {
-  const [location] = useLocation();
+  const { navigationItems, isActive } = useNavigation();
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
@@ -31,9 +33,9 @@ export default function Sidebar() {
       <div className="flex flex-col w-64 bg-card border-r border-border">
         <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
           <div className="px-4 space-y-1">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = location === item.href;
+            {navigationItems.map((item) => {
+              const Icon = iconMap[item.icon as keyof typeof iconMap];
+              const active = isActive(item.href);
               
               return (
                 <Link 
@@ -41,8 +43,11 @@ export default function Sidebar() {
                   href={item.href}
                   className={cn(
                     "nav-link",
-                    isActive ? "nav-link-active" : "nav-link-inactive"
+                    active ? "nav-link-active" : "nav-link-inactive"
                   )}
+                  // 네비게이션 접근성 향상
+                  aria-current={active ? "page" : undefined}
+                  title={item.description}
                 >
                   <Icon className="w-5 h-5 mr-3" />
                   {item.name}
@@ -55,6 +60,7 @@ export default function Sidebar() {
           <button
             onClick={handleLogout}
             className="nav-link nav-link-inactive w-full"
+            title="계정에서 로그아웃"
           >
             <LogOut className="w-5 h-5 mr-3" />
             로그아웃
