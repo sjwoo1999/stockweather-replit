@@ -22,7 +22,9 @@ import {
   AlertTriangle
 } from "lucide-react";
 import StockWeatherCard from "@/components/StockWeatherCard";
+import MarketWeatherPanel from "@/components/MarketWeatherPanel";
 import { cn } from "@/lib/utils";
+import { layouts } from "@/lib/designSystem";
 
 interface StockWeatherData {
   stockCode: string;
@@ -42,6 +44,8 @@ interface MarketWeatherData {
   humidity: number; // Volatility
   windSpeed: number; // Trading volume
   pressure: number; // Market pressure
+  trend: 'up' | 'down' | 'stable';
+  confidence: number;
 }
 
 export default function StockWeatherDashboard() {
@@ -54,7 +58,9 @@ export default function StockWeatherDashboard() {
     temperature: 65, // Market sentiment (0-100)
     humidity: 45, // Volatility (0-100)
     windSpeed: 78, // Trading volume (0-100)
-    pressure: 52 // Market pressure (0-100)
+    pressure: 52, // Market pressure (0-100)
+    trend: 'up',
+    confidence: 78
   };
 
   const stockWeatherData: StockWeatherData[] = [
@@ -126,25 +132,7 @@ export default function StockWeatherDashboard() {
     }
   ];
 
-  const getMarketWeatherIcon = (condition: string) => {
-    const iconMap = {
-      'sunny': <Sun className="w-16 h-16 text-yellow-500" />,
-      'cloudy': <Cloudy className="w-16 h-16 text-gray-500" />,
-      'rainy': <CloudRain className="w-16 h-16 text-blue-500" />,
-      'stormy': <Zap className="w-16 h-16 text-purple-500" />
-    };
-    return iconMap[condition as keyof typeof iconMap] || <Cloud className="w-16 h-16 text-gray-400" />;
-  };
 
-  const getMarketDescription = (condition: string) => {
-    const descriptions = {
-      'sunny': '맑음 - 강세장 지속',
-      'cloudy': '흐림 - 혼조 양상',
-      'rainy': '비 - 약세 전망',
-      'stormy': '폭풍 - 고변동성 장세'
-    };
-    return descriptions[condition as keyof typeof descriptions] || '예측 불가';
-  };
 
   const filteredStocks = stockWeatherData.filter(stock => 
     stock.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -159,89 +147,18 @@ export default function StockWeatherDashboard() {
         <p className="text-muted-foreground">주식 시장을 날씨처럼 직관적으로 파악하세요</p>
       </div>
 
-      {/* Market Weather Overview */}
-      <Card 
-        className="mb-8 border-0 overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white'
-        }}
-      >
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center text-white">
-            <MapPin className="w-6 h-6 mr-3" />
-            📊 코스피 시장 날씨 현황
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Weather Display */}
-            <div className="lg:col-span-1 flex flex-col items-center text-center">
-              <div className="mb-4 p-4 bg-white/20 rounded-full backdrop-blur-sm">
-                {getMarketWeatherIcon(marketWeather.overall)}
-              </div>
-              <h3 className="text-3xl font-bold mb-2">
-                {getMarketDescription(marketWeather.overall)}
-              </h3>
-              <p className="text-white/80 text-lg">오늘의 시장 전망</p>
-              <div className="mt-4 px-4 py-2 bg-white/20 rounded-full backdrop-blur-sm">
-                <span className="text-sm font-medium">신뢰도: 78%</span>
-              </div>
-            </div>
+      {/* Market Weather Overview - 전체 시장 날씨 */}
+      <MarketWeatherPanel data={marketWeather} className="mb-12" />
 
-            {/* Weather Metrics Grid */}
-            <div className="lg:col-span-2 grid grid-cols-2 gap-6">
-              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">{marketWeather.temperature}°</div>
-                <div className="text-lg font-medium mb-1">시장 온도</div>
-                <div className="text-sm text-white/70">투자 심리 지수</div>
-                <div className="mt-3 w-full bg-white/20 rounded-full h-2">
-                  <div 
-                    className="bg-yellow-400 h-2 rounded-full transition-all duration-1000"
-                    style={{ width: `${marketWeather.temperature}%` }}
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">{marketWeather.humidity}%</div>
-                <div className="text-lg font-medium mb-1">변동성</div>
-                <div className="text-sm text-white/70">시장 불확실성</div>
-                <div className="mt-3 w-full bg-white/20 rounded-full h-2">
-                  <div 
-                    className="bg-blue-400 h-2 rounded-full transition-all duration-1000"
-                    style={{ width: `${marketWeather.humidity}%` }}
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">{marketWeather.windSpeed}</div>
-                <div className="text-lg font-medium mb-1">거래 활성도</div>
-                <div className="text-sm text-white/70">거래량 지수</div>
-                <div className="mt-3 w-full bg-white/20 rounded-full h-2">
-                  <div 
-                    className="bg-green-400 h-2 rounded-full transition-all duration-1000"
-                    style={{ width: `${marketWeather.windSpeed}%` }}
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <div className="text-4xl font-bold mb-2">{marketWeather.pressure}</div>
-                <div className="text-lg font-medium mb-1">시장 압력</div>
-                <div className="text-sm text-white/70">매도/매수 압력</div>
-                <div className="mt-3 w-full bg-white/20 rounded-full h-2">
-                  <div 
-                    className="bg-purple-400 h-2 rounded-full transition-all duration-1000"
-                    style={{ width: `${marketWeather.pressure}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Section Divider */}
+      <div className="mb-8 text-center">
+        <div className="inline-flex items-center gap-4 px-6 py-3 bg-muted/50 rounded-full">
+          <div className="w-12 h-px bg-border"></div>
+          <h2 className="text-lg font-semibold text-foreground">🌤️ 개별 종목 날씨 예보</h2>
+          <div className="w-12 h-px bg-border"></div>
+        </div>
+        <p className="text-sm text-muted-foreground mt-2">관심 종목별 맞춤형 투자 전망을 확인하세요</p>
+      </div>
 
       {/* Search and Filter */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -279,42 +196,42 @@ export default function StockWeatherDashboard() {
           <TabsTrigger value="stormy">폭풍</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="all" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             {filteredStocks.map((stock) => (
-              <StockWeatherCard key={stock.stockCode} data={stock} />
+              <StockWeatherCard key={stock.stockCode} data={stock} className="animate-in fade-in duration-500" />
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="sunny" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="sunny" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             {filteredStocks.filter(stock => stock.weatherCondition === 'sunny').map((stock) => (
-              <StockWeatherCard key={stock.stockCode} data={stock} />
+              <StockWeatherCard key={stock.stockCode} data={stock} className="animate-in fade-in duration-500" />
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="cloudy" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="cloudy" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             {filteredStocks.filter(stock => ['cloudy', 'windy'].includes(stock.weatherCondition)).map((stock) => (
-              <StockWeatherCard key={stock.stockCode} data={stock} />
+              <StockWeatherCard key={stock.stockCode} data={stock} className="animate-in fade-in duration-500" />
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="rainy" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="rainy" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             {filteredStocks.filter(stock => ['rainy', 'drizzle', 'snowy'].includes(stock.weatherCondition)).map((stock) => (
-              <StockWeatherCard key={stock.stockCode} data={stock} />
+              <StockWeatherCard key={stock.stockCode} data={stock} className="animate-in fade-in duration-500" />
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="stormy" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="stormy" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             {filteredStocks.filter(stock => stock.weatherCondition === 'stormy').map((stock) => (
-              <StockWeatherCard key={stock.stockCode} data={stock} />
+              <StockWeatherCard key={stock.stockCode} data={stock} className="animate-in fade-in duration-500" />
             ))}
           </div>
         </TabsContent>
