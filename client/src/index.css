@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --background: hsl(0, 0%, 98%);
+  --foreground: hsl(210, 6%, 13%);
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(215, 16%, 47%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(210, 6%, 13%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(210, 6%, 13%);
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(122, 39%, 49%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --accent: hsl(33, 100%, 50%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(207, 90%, 54%);
+  --radius: 0.5rem;
+  --success: hsl(142, 71%, 45%);
+  --warning: hsl(38, 92%, 50%);
+  --error: hsl(0, 84%, 60%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(122, 39%, 49%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --accent: hsl(33, 100%, 50%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+  --success: hsl(142, 71%, 45%);
+  --warning: hsl(38, 92%, 50%);
+  --error: hsl(0, 84%, 60%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+}
+
+@layer components {
+  .metric-card {
+    @apply bg-card rounded-lg shadow-sm p-6 border border-border;
+  }
+
+  .nav-link {
+    @apply flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors;
+  }
+
+  .nav-link-active {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .nav-link-inactive {
+    @apply text-muted-foreground hover:text-foreground hover:bg-muted;
+  }
+
+  .stock-positive {
+    @apply text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/20;
+  }
+
+  .stock-negative {
+    @apply text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/20;
+  }
+
+  .confidence-bar {
+    @apply w-full bg-muted rounded-full h-2;
+  }
+
+  .confidence-fill {
+    @apply h-2 rounded-full transition-all duration-300;
+  }
+
+  .confidence-high {
+    @apply bg-green-500;
+  }
+
+  .confidence-medium {
+    @apply bg-yellow-500;
+  }
+
+  .confidence-low {
+    @apply bg-red-500;
+  }
+}
+
+@layer utilities {
+  .text-primary-custom {
+    color: hsl(207, 90%, 54%);
+  }
+
+  .text-secondary-custom {
+    color: hsl(122, 39%, 49%);
+  }
+
+  .text-accent-custom {
+    color: hsl(33, 100%, 50%);
+  }
+
+  .text-success-custom {
+    color: hsl(142, 71%, 45%);
+  }
+
+  .text-warning-custom {
+    color: hsl(38, 92%, 50%);
+  }
+
+  .text-error-custom {
+    color: hsl(0, 84%, 60%);
+  }
+
+  .bg-primary-custom {
+    background-color: hsl(207, 90%, 54%);
+  }
+
+  .bg-secondary-custom {
+    background-color: hsl(122, 39%, 49%);
+  }
+
+  .bg-accent-custom {
+    background-color: hsl(33, 100%, 50%);
+  }
+
+  .bg-success-custom {
+    background-color: hsl(142, 71%, 45%);
+  }
+
+  .bg-warning-custom {
+    background-color: hsl(38, 92%, 50%);
+  }
+
+  .bg-error-custom {
+    background-color: hsl(0, 84%, 60%);
+  }
+}
