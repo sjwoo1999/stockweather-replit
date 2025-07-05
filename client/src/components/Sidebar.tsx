@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
 import { 
@@ -8,10 +8,11 @@ import {
 } from "@/constants/navigation";
 
 export default function Sidebar() {
-  const [currentPath] = useLocation();
+  const [currentPath, setLocation] = useLocation();
 
-  // 디버깅을 위한 로그
-  console.log('Sidebar currentPath:', currentPath);
+  const handleNavigation = (href: string) => {
+    setLocation(href);
+  };
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
@@ -30,14 +31,12 @@ export default function Sidebar() {
               const Icon = getNavigationIcon(item.icon);
               const active = isActiveRoute(currentPath, item.href);
               
-              console.log(`Item: ${item.name}, href: ${item.href}, currentPath: ${currentPath}, active: ${active}`);
-              
               return (
-                <Link 
-                  key={item.id} 
-                  href={item.href}
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigation(item.href)}
                   className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors w-full text-left",
                     active 
                       ? "bg-primary text-primary-foreground" 
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -54,7 +53,7 @@ export default function Sidebar() {
                     aria-hidden="true"
                   />
                   <span>{item.name}</span>
-                </Link>
+                </button>
               );
             })}
           </div>
@@ -63,7 +62,7 @@ export default function Sidebar() {
         <div className="flex-shrink-0 p-4">
           <button
             onClick={handleLogout}
-            className="nav-link nav-link-inactive w-full"
+            className="flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors w-full text-left text-muted-foreground hover:text-foreground hover:bg-muted"
             aria-label="계정에서 로그아웃"
             title="계정에서 로그아웃"
             tabIndex={0}
