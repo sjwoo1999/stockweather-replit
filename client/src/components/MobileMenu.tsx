@@ -1,10 +1,10 @@
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
 import { 
   NAVIGATION_ITEMS, 
-  getNavigationIcon, 
-  isActiveRoute 
+  getNavigationIcon
 } from "@/constants/navigation";
 import { LogOut, X } from "lucide-react";
 import type { User } from "@shared/schema";
@@ -17,21 +17,30 @@ interface MobileMenuProps {
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const { user } = useAuth() as { user: User | undefined };
   const [currentPath, setLocation] = useLocation();
+  const [activeNavItem, setActiveNavItem] = useState(currentPath);
+
+  // 경로 변경 시 활성 아이템 동기화
+  useEffect(() => {
+    setActiveNavItem(currentPath);
+  }, [currentPath]);
 
   const handleNavigation = (href: string) => {
-    console.log('Mobile navigation clicked:', href);
+    // 즉시 UI 상태 업데이트
+    setActiveNavItem(href);
     
-    // 즉시 URL 변경
-    window.history.pushState({}, '', href);
-    
-    // wouter에게 변경사항 알림
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    
-    // setLocation으로도 시도
+    // 네비게이션 실행
     setLocation(href);
     
-    onClose(); // 네비게이션 후 메뉴 닫기
-    console.log('Mobile navigation completed to:', href);
+    // 메뉴 닫기
+    onClose();
+  };
+
+  // 간단한 경로 매칭 함수
+  const isActive = (itemHref: string) => {
+    if (itemHref === '/') {
+      return activeNavItem === '/';
+    }
+    return activeNavItem.startsWith(itemHref);
   };
 
   // ESC 키로 메뉴 닫기
@@ -82,23 +91,22 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         >
           {NAVIGATION_ITEMS.map((item) => {
             const Icon = getNavigationIcon(item.icon);
-            const active = isActiveRoute(currentPath, item.href);
+            const active = isActive(item.href);
             
             return (
               <button
                 key={item.id} 
                 onClick={() => handleNavigation(item.href)}
                 className={cn(
-                  "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary w-full text-left",
+                  "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary w-full text-left",
                   active 
-                    ? "text-primary bg-primary/10 border-r-4 border-primary" 
+                    ? "text-primary bg-primary/10 border-r-4 border-primary shadow-sm" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 )}
-                // 접근성 속성들
                 aria-current={active ? "page" : undefined}
                 aria-label={item.ariaLabel}
                 title={item.description}
-                tabIndex={0}
+                type="button"
               >
                 <Icon 
                   className="w-5 h-5 mr-3" 
