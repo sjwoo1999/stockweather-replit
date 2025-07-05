@@ -28,17 +28,17 @@ export default function StockAnalysis() {
     retry: false,
   });
 
-  const { data: stockQuote } = useQuery({
+  const { data: stockQuote, isLoading: stockQuoteLoading } = useQuery({
     queryKey: [`/api/stocks/${selectedStock}/quote`],
     enabled: !!selectedStock,
   });
 
-  const { data: priceHistory } = useQuery({
+  const { data: priceHistory, isLoading: priceHistoryLoading } = useQuery({
     queryKey: [`/api/stocks/${selectedStock}/history`, { days: 90 }],
     enabled: !!selectedStock,
   });
 
-  const { data: dartDisclosures } = useQuery({
+  const { data: dartDisclosures, isLoading: dartDisclosuresLoading } = useQuery({
     queryKey: [`/api/dart/stock/${selectedStock}`, { limit: 10 }],
     enabled: !!selectedStock,
   });
@@ -57,13 +57,38 @@ export default function StockAnalysis() {
     return volume.toString();
   };
 
-  const chartData = priceHistory?.map(item => ({
+  const chartData = Array.isArray(priceHistory) ? priceHistory.map(item => ({
     date: new Date(item.timestamp).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
     price: parseFloat(item.price.toString()),
     volume: item.volume || 0,
-  })) || [];
+  })) : [];
 
-  const isPositive = stockQuote?.change >= 0;
+  // 안전한 타입 체크 함수들
+  const isValidStockQuote = (data: any): data is { price: number; change: number; changePercent: number; volume: number; name: string; code: string } => {
+    return data && typeof data === 'object' && 'price' in data && 'change' in data;
+  };
+
+  const isValidDisclosures = (data: any): data is Array<any> => {
+    return Array.isArray(data);
+  };
+
+  const validStockQuote = isValidStockQuote(stockQuote) ? stockQuote : null;
+  const validDisclosures = isValidDisclosures(dartDisclosures) ? dartDisclosures : [];
+  const isPositive = validStockQuote ? validStockQuote.change >= 0 : false;
+
+  // 로딩 상태 체크
+  if (stockQuoteLoading || priceHistoryLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">데이터를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -114,7 +139,7 @@ export default function StockAnalysis() {
         </CardContent>
       </Card>
 
-      {stockQuote && (
+      {validStockQuote && (
         <>
           {/* Stock Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -123,7 +148,7 @@ export default function StockAnalysis() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-muted-foreground text-sm font-medium">현재가</p>
-                    <p className="text-2xl font-bold text-foreground">{formatCurrency(stockQuote.price)}</p>
+                    <p className="text-2xl font-bold text-foreground">{formatCurrency(validStockQuote.price)}</p>
                     <div className="flex items-center mt-1">
                       <Badge 
                         variant={isPositive ? "default" : "destructive"}
@@ -132,7 +157,7 @@ export default function StockAnalysis() {
                           isPositive ? "bg-success/10 text-success" : "bg-error/10 text-error"
                         )}
                       >
-                        {isPositive ? '+' : ''}{stockQuote.change?.toFixed(0)} ({isPositive ? '+' : ''}{stockQuote.changePercent?.toFixed(2)}%)
+                        {isPositive ? '+' : ''}{validStockQuote.change?.toFixed(0)} ({isPositive ? '+' : ''}{validStockQuote.changePercent?.toFixed(2)}%)
                       </Badge>
                     </div>
                   </div>
