@@ -27,13 +27,13 @@ export default function Landing() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-            주식과 날씨의 상관관계를
+            주식 시장을
             <br />
-            <span className="text-primary">한눈에 분석하세요</span>
+            <span className="text-primary">날씨처럼 예보합니다</span>
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            한국 주식 시장 특화 포트폴리오 관리부터 날씨 데이터 기반 투자 인사이트까지,
-            스마트한 투자 결정을 도와드립니다.
+            복잡한 주식 정보를 직관적인 날씨 예보 스타일로 단순화하여,
+            개인 투자자가 시장 동향과 투자 신호를 한눈에 파악할 수 있도록 도와드립니다.
           </p>
           <Button 
             size="lg"
@@ -63,12 +63,12 @@ export default function Landing() {
                 <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                   <BarChart3 className="w-6 h-6 text-primary" />
                 </div>
-                <CardTitle className="text-xl">포트폴리오 관리</CardTitle>
+                <CardTitle className="text-xl">시장 날씨 대시보드</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  보유 종목을 체계적으로 관리하고 실시간 가격 변동을 추적하세요.
-                  투자 확신도 시각화로 리스크 관리까지 가능합니다.
+                  전체 시장을 날씨 지도처럼 한눈에 파악하고, 각 종목의 투자 전망을
+                  직관적인 날씨 아이콘으로 빠르게 확인하세요.
                 </p>
               </CardContent>
             </Card>
@@ -78,12 +78,12 @@ export default function Landing() {
                 <div className="mx-auto w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
                   <Cloud className="w-6 h-6 text-accent" />
                 </div>
-                <CardTitle className="text-xl">날씨 상관관계 분석</CardTitle>
+                <CardTitle className="text-xl">주식 날씨 예보</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  기온, 강수량, 풍속 등 날씨 데이터와 주식 가격의 상관관계를 분석하여
-                  숨겨진 투자 기회를 발견하세요.
+                  복잡한 주식 분석을 맑음, 흐림, 비 등의 날씨 아이콘으로 직관적으로 표현하여
+                  투자 전망을 쉽게 파악할 수 있습니다.
                 </p>
               </CardContent>
             </Card>
