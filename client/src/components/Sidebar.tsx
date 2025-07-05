@@ -12,12 +12,17 @@ export default function Sidebar() {
 
   const handleNavigation = (href: string) => {
     console.log('Sidebar navigation clicked:', href);
-    try {
-      setLocation(href);
-      console.log('Navigation successful to:', href);
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
+    
+    // 즉시 URL 변경
+    window.history.pushState({}, '', href);
+    
+    // wouter에게 변경사항 알림
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    
+    // setLocation으로도 시도
+    setLocation(href);
+    
+    console.log('Navigation completed to:', href);
   };
 
   const handleLogout = () => {
