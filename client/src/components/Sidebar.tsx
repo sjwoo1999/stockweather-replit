@@ -10,6 +10,9 @@ import {
 export default function Sidebar() {
   const [currentPath] = useLocation();
 
+  // 디버깅을 위한 로그
+  console.log('Sidebar currentPath:', currentPath);
+
   const handleLogout = () => {
     window.location.href = "/api/logout";
   };
@@ -27,13 +30,17 @@ export default function Sidebar() {
               const Icon = getNavigationIcon(item.icon);
               const active = isActiveRoute(currentPath, item.href);
               
+              console.log(`Item: ${item.name}, href: ${item.href}, currentPath: ${currentPath}, active: ${active}`);
+              
               return (
                 <Link 
                   key={item.id} 
                   href={item.href}
                   className={cn(
-                    "nav-link",
-                    active ? "nav-link-active" : "nav-link-inactive"
+                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                    active 
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
                   // 접근성 속성들
                   aria-current={active ? "page" : undefined}
