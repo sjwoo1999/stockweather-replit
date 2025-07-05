@@ -43,7 +43,8 @@ export default function StockAnalysis() {
     enabled: !!selectedStock,
   });
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return '₩0';
     return `₩${value.toLocaleString()}`;
   };
 

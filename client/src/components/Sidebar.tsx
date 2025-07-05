@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 
 const navigation = [
-  { name: "대시보드", href: "/", icon: BarChart3 },
+  { name: "주식 날씨 예보", href: "/", icon: Cloud },
   { name: "내 포트폴리오", href: "/portfolio", icon: Briefcase },
   { name: "종목 분석", href: "/analysis", icon: ChartBar },
-  { name: "날씨 상관관계", href: "/weather", icon: Cloud },
+  { name: "시장 날씨", href: "/weather", icon: BarChart3 },
   { name: "공시정보", href: "/dart", icon: FileText },
   { name: "설정", href: "/settings", icon: Settings },
 ];
@@ -36,16 +36,16 @@ export default function Sidebar() {
               const isActive = location === item.href;
               
               return (
-                <Link key={item.name} href={item.href}>
-                  <a
-                    className={cn(
-                      "nav-link",
-                      isActive ? "nav-link-active" : "nav-link-inactive"
-                    )}
-                  >
-                    <Icon className="w-5 h-5 mr-3" />
-                    {item.name}
-                  </a>
+                <Link 
+                  key={item.name} 
+                  href={item.href}
+                  className={cn(
+                    "nav-link",
+                    isActive ? "nav-link-active" : "nav-link-inactive"
+                  )}
+                >
+                  <Icon className="w-5 h-5 mr-3" />
+                  {item.name}
                 </Link>
               );
             })}
