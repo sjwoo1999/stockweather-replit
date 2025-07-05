@@ -18,7 +18,7 @@ import {
   Minus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getWeatherTheme, getSignalTheme, getConfidenceColor } from "@/lib/weatherTheme";
+import { getStockWeatherTheme, getSignalTheme, getConfidenceColor } from "@/lib/designSystem";
 
 interface StockWeatherData {
   stockCode: string;
@@ -38,7 +38,7 @@ interface StockWeatherCardProps {
 }
 
 export default function StockWeatherCard({ data, className }: StockWeatherCardProps) {
-  const weatherTheme = getWeatherTheme(data.weatherCondition);
+  const weatherTheme = getStockWeatherTheme(data.weatherCondition);
   const signalTheme = getSignalTheme(data.recommendation);
   const confidenceColor = getConfidenceColor(data.confidence);
 
@@ -195,7 +195,7 @@ export default function StockWeatherCard({ data, className }: StockWeatherCardPr
           <div 
             className="p-4 rounded-lg text-sm leading-relaxed"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
               color: weatherTheme.textPrimary
             }}
           >
