@@ -19,8 +19,19 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const [currentPath, setLocation] = useLocation();
 
   const handleNavigation = (href: string) => {
+    console.log('Mobile navigation clicked:', href);
+    
+    // 즉시 URL 변경
+    window.history.pushState({}, '', href);
+    
+    // wouter에게 변경사항 알림
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    
+    // setLocation으로도 시도
     setLocation(href);
+    
     onClose(); // 네비게이션 후 메뉴 닫기
+    console.log('Mobile navigation completed to:', href);
   };
 
   // ESC 키로 메뉴 닫기
