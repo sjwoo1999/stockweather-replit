@@ -95,7 +95,18 @@ export const getNavigationIcon = (iconType: NavigationIconType): LucideIcon => {
 };
 
 export const findNavigationItem = (href: string): NavigationItem | undefined => {
-  return NAVIGATION_ITEMS.find(item => item.href === href);
+  // 정확히 일치하는 항목 먼저 찾기
+  let found = NAVIGATION_ITEMS.find(item => item.href === href);
+  if (found) return found;
+  
+  // 루트 경로가 아닌 경우, 시작 부분이 일치하는 항목 찾기
+  if (href !== "/") {
+    found = NAVIGATION_ITEMS.find(item => 
+      item.href !== "/" && href.startsWith(item.href)
+    );
+  }
+  
+  return found;
 };
 
 export const isActiveRoute = (currentPath: string, itemHref: string): boolean => {

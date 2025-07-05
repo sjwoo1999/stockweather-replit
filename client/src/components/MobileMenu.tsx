@@ -1,8 +1,11 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigation } from "@/contexts/NavigationContext";
-import { getNavigationIcon } from "@/constants/navigation";
+import { 
+  NAVIGATION_ITEMS, 
+  getNavigationIcon, 
+  isActiveRoute 
+} from "@/constants/navigation";
 import { LogOut, X } from "lucide-react";
 import type { User } from "@shared/schema";
 
@@ -13,7 +16,7 @@ interface MobileMenuProps {
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const { user } = useAuth() as { user: User | undefined };
-  const { navigationItems, isActive } = useNavigation();
+  const [currentPath] = useLocation();
 
   // ESC 키로 메뉴 닫기
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -61,9 +64,9 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           role="navigation"
           aria-label="모바일 네비게이션"
         >
-          {navigationItems.map((item) => {
+          {NAVIGATION_ITEMS.map((item) => {
             const Icon = getNavigationIcon(item.icon);
-            const active = isActive(item.href);
+            const active = isActiveRoute(currentPath, item.href);
             
             return (
               <Link 
