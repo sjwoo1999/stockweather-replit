@@ -110,8 +110,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stock routes
-  app.get('/api/stocks/search', isAuthenticated, async (req: any, res) => {
+  // Stock routes (public access)
+  app.get('/api/stocks/search', async (req: any, res) => {
     try {
       const query = req.query.q as string;
       if (!query) {
@@ -126,7 +126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/stocks/:code/quote', isAuthenticated, async (req: any, res) => {
+  app.get('/api/stocks/:code/quote', async (req: any, res) => {
     try {
       const quote = await stockApi.getStockQuote(req.params.code);
       if (!quote) {
@@ -139,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/stocks/:code/history', isAuthenticated, async (req: any, res) => {
+  app.get('/api/stocks/:code/history', async (req: any, res) => {
     try {
       const days = parseInt(req.query.days as string) || 30;
       const history = await storage.getStockPriceHistory(req.params.code, days);
@@ -172,8 +172,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // DART routes
-  app.get('/api/dart/recent', isAuthenticated, async (req: any, res) => {
+  // DART routes (public access)
+  app.get('/api/dart/recent', async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const disclosures = await dartApi.getRecentDisclosures(limit);
@@ -184,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/dart/stock/:code', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dart/stock/:code', async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const disclosures = await dartApi.getCompanyDisclosures(req.params.code, limit);
