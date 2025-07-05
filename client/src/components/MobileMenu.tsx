@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { 
@@ -16,7 +16,12 @@ interface MobileMenuProps {
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const { user } = useAuth() as { user: User | undefined };
-  const [currentPath] = useLocation();
+  const [currentPath, setLocation] = useLocation();
+
+  const handleNavigation = (href: string) => {
+    setLocation(href);
+    onClose(); // 네비게이션 후 메뉴 닫기
+  };
 
   // ESC 키로 메뉴 닫기
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -69,16 +74,15 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             const active = isActiveRoute(currentPath, item.href);
             
             return (
-              <Link 
+              <button
                 key={item.id} 
-                href={item.href}
+                onClick={() => handleNavigation(item.href)}
                 className={cn(
-                  "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary",
+                  "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary w-full text-left",
                   active 
                     ? "text-primary bg-primary/10 border-r-4 border-primary" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 )}
-                onClick={onClose}
                 // 접근성 속성들
                 aria-current={active ? "page" : undefined}
                 aria-label={item.ariaLabel}
@@ -90,7 +94,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   aria-hidden="true"
                 />
                 <span>{item.name}</span>
-              </Link>
+              </button>
             );
           })}
         </nav>
