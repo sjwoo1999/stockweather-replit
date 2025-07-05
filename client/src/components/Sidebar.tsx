@@ -1,11 +1,14 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
-import { useNavigation } from "@/contexts/NavigationContext";
-import { getNavigationIcon } from "@/constants/navigation";
+import { 
+  NAVIGATION_ITEMS, 
+  getNavigationIcon, 
+  isActiveRoute 
+} from "@/constants/navigation";
 
 export default function Sidebar() {
-  const { navigationItems, isActive } = useNavigation();
+  const [currentPath] = useLocation();
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
@@ -20,9 +23,9 @@ export default function Sidebar() {
       <div className="flex flex-col w-64 bg-card border-r border-border">
         <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
           <div className="px-4 space-y-1">
-            {navigationItems.map((item) => {
+            {NAVIGATION_ITEMS.map((item) => {
               const Icon = getNavigationIcon(item.icon);
-              const active = isActive(item.href);
+              const active = isActiveRoute(currentPath, item.href);
               
               return (
                 <Link 
