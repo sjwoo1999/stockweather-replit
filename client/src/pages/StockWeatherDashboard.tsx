@@ -160,47 +160,83 @@ export default function StockWeatherDashboard() {
       </div>
 
       {/* Market Weather Overview */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <MapPin className="w-5 h-5 mr-2" />
-            코스피 전체 시장 날씨
+      <Card 
+        className="mb-8 border-0 overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white'
+        }}
+      >
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center text-white">
+            <MapPin className="w-6 h-6 mr-3" />
+            📊 코스피 시장 날씨 현황
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-            {/* Main Weather */}
-            <div className="md:col-span-2 flex items-center space-x-4">
-              {getMarketWeatherIcon(marketWeather.overall)}
-              <div>
-                <h3 className="text-2xl font-bold text-foreground">
-                  {getMarketDescription(marketWeather.overall)}
-                </h3>
-                <p className="text-muted-foreground">오늘의 시장 전망</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Weather Display */}
+            <div className="lg:col-span-1 flex flex-col items-center text-center">
+              <div className="mb-4 p-4 bg-white/20 rounded-full backdrop-blur-sm">
+                {getMarketWeatherIcon(marketWeather.overall)}
+              </div>
+              <h3 className="text-3xl font-bold mb-2">
+                {getMarketDescription(marketWeather.overall)}
+              </h3>
+              <p className="text-white/80 text-lg">오늘의 시장 전망</p>
+              <div className="mt-4 px-4 py-2 bg-white/20 rounded-full backdrop-blur-sm">
+                <span className="text-sm font-medium">신뢰도: 78%</span>
               </div>
             </div>
 
-            {/* Weather Metrics */}
-            <div className="md:col-span-3 grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">{marketWeather.temperature}°</div>
-                <div className="text-sm text-muted-foreground">시장 온도</div>
-                <div className="text-xs text-muted-foreground">투자 심리</div>
+            {/* Weather Metrics Grid */}
+            <div className="lg:col-span-2 grid grid-cols-2 gap-6">
+              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 text-center">
+                <div className="text-4xl font-bold mb-2">{marketWeather.temperature}°</div>
+                <div className="text-lg font-medium mb-1">시장 온도</div>
+                <div className="text-sm text-white/70">투자 심리 지수</div>
+                <div className="mt-3 w-full bg-white/20 rounded-full h-2">
+                  <div 
+                    className="bg-yellow-400 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: `${marketWeather.temperature}%` }}
+                  />
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">{marketWeather.humidity}%</div>
-                <div className="text-sm text-muted-foreground">습도</div>
-                <div className="text-xs text-muted-foreground">변동성</div>
+              
+              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 text-center">
+                <div className="text-4xl font-bold mb-2">{marketWeather.humidity}%</div>
+                <div className="text-lg font-medium mb-1">변동성</div>
+                <div className="text-sm text-white/70">시장 불확실성</div>
+                <div className="mt-3 w-full bg-white/20 rounded-full h-2">
+                  <div 
+                    className="bg-blue-400 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: `${marketWeather.humidity}%` }}
+                  />
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">{marketWeather.windSpeed}km/h</div>
-                <div className="text-sm text-muted-foreground">풍속</div>
-                <div className="text-xs text-muted-foreground">거래량</div>
+              
+              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 text-center">
+                <div className="text-4xl font-bold mb-2">{marketWeather.windSpeed}</div>
+                <div className="text-lg font-medium mb-1">거래 활성도</div>
+                <div className="text-sm text-white/70">거래량 지수</div>
+                <div className="mt-3 w-full bg-white/20 rounded-full h-2">
+                  <div 
+                    className="bg-green-400 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: `${marketWeather.windSpeed}%` }}
+                  />
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">{marketWeather.pressure}hPa</div>
-                <div className="text-sm text-muted-foreground">기압</div>
-                <div className="text-xs text-muted-foreground">시장 압력</div>
+              
+              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 text-center">
+                <div className="text-4xl font-bold mb-2">{marketWeather.pressure}</div>
+                <div className="text-lg font-medium mb-1">시장 압력</div>
+                <div className="text-sm text-white/70">매도/매수 압력</div>
+                <div className="mt-3 w-full bg-white/20 rounded-full h-2">
+                  <div 
+                    className="bg-purple-400 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: `${marketWeather.pressure}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>

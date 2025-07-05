@@ -443,7 +443,7 @@ export default function DartDisclosures() {
                   .map((company, index) => {
                     const companyDisclosures = recentDisclosures?.filter((d: DartDisclosure) => d.companyName === company) || [];
                     return (
-                      <div key={company} className="flex items-center justify-between">
+                      <div key={`company-${company}-${index}`} className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium text-primary">
                             {index + 1}
