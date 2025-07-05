@@ -2,11 +2,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bell, Download, Menu, TrendingUp } from "lucide-react";
-import { useState } from "react";
 
-export default function Header() {
+interface HeaderProps {
+  onMobileMenuToggle?: () => void;
+}
+
+export default function Header({ onMobileMenuToggle }: HeaderProps) {
   const { user } = useAuth();
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   return (
     <header className="bg-card shadow-sm border-b border-border sticky top-0 z-40">
@@ -45,7 +47,7 @@ export default function Header() {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              onClick={onMobileMenuToggle}
             >
               <Menu className="w-5 h-5" />
             </Button>
