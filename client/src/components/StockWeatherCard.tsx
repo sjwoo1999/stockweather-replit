@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Cloud, 
@@ -10,9 +10,15 @@ import {
   CloudDrizzle,
   Cloudy,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Thermometer,
+  Gauge,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getWeatherTheme, getSignalTheme, getConfidenceColor } from "@/lib/weatherTheme";
 
 interface StockWeatherData {
   stockCode: string;
@@ -32,94 +38,111 @@ interface StockWeatherCardProps {
 }
 
 export default function StockWeatherCard({ data, className }: StockWeatherCardProps) {
-  const getWeatherIcon = (condition: string) => {
+  const weatherTheme = getWeatherTheme(data.weatherCondition);
+  const signalTheme = getSignalTheme(data.recommendation);
+  const confidenceColor = getConfidenceColor(data.confidence);
+
+  const getWeatherIcon = (condition: string, size: string = "w-16 h-16") => {
+    const iconStyle = `${size} drop-shadow-lg`;
     const iconMap = {
-      'sunny': <Sun className="w-12 h-12 text-yellow-500" />,
-      'cloudy': <Cloudy className="w-12 h-12 text-gray-500" />,
-      'rainy': <CloudRain className="w-12 h-12 text-blue-500" />,
-      'stormy': <Zap className="w-12 h-12 text-purple-500" />,
-      'snowy': <CloudSnow className="w-12 h-12 text-blue-300" />,
-      'windy': <Wind className="w-12 h-12 text-gray-400" />,
-      'drizzle': <CloudDrizzle className="w-12 h-12 text-blue-400" />
+      'sunny': <Sun className={`${iconStyle} text-orange-400`} />,
+      'cloudy': <Cloudy className={`${iconStyle} text-gray-500`} />,
+      'rainy': <CloudRain className={`${iconStyle} text-blue-500`} />,
+      'stormy': <Zap className={`${iconStyle} text-purple-500`} />,
+      'snowy': <CloudSnow className={`${iconStyle} text-blue-300`} />,
+      'windy': <Wind className={`${iconStyle} text-teal-500`} />,
+      'drizzle': <CloudDrizzle className={`${iconStyle} text-blue-400`} />
     };
-    return iconMap[condition as keyof typeof iconMap] || <Cloud className="w-12 h-12 text-gray-400" />;
+    return iconMap[condition as keyof typeof iconMap] || <Cloud className={`${iconStyle} text-gray-400`} />;
   };
 
-  const getWeatherDescription = (condition: string) => {
-    const descriptions = {
-      'sunny': '맑음 - 강한 상승 전망',
-      'cloudy': '흐림 - 보합세 예상',
-      'rainy': '비 - 하락 우려',
-      'stormy': '폭풍 - 급격한 변동성',
-      'snowy': '눈 - 장기 침체',
-      'windy': '바람 - 불안정한 흐름',
-      'drizzle': '이슬비 - 소폭 하락'
+  const getWeatherLabel = (condition: string) => {
+    const labels = {
+      'sunny': '맑음',
+      'cloudy': '흐림',
+      'rainy': '비',
+      'stormy': '폭풍',
+      'snowy': '눈',
+      'windy': '바람',
+      'drizzle': '이슬비'
     };
-    return descriptions[condition as keyof typeof descriptions] || '예측 불가';
+    return labels[condition as keyof typeof labels] || '예측불가';
   };
 
-  const getRecommendationColor = (recommendation: string) => {
-    switch (recommendation) {
-      case 'buy': return 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400';
-      case 'hold': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400';
-      case 'sell': return 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400';
+  const getRecommendationIcon = (rec: string) => {
+    switch (rec) {
+      case 'buy': return <ArrowUpRight className="w-5 h-5" />;
+      case 'sell': return <ArrowDownRight className="w-5 h-5" />;
+      default: return <Minus className="w-5 h-5" />;
     }
   };
 
-  const getRecommendationText = (recommendation: string) => {
-    switch (recommendation) {
+  const getRecommendationText = (rec: string) => {
+    switch (rec) {
       case 'buy': return '매수';
-      case 'hold': return '보유';
       case 'sell': return '매도';
-      default: return '관망';
+      default: return '보유';
     }
   };
 
   return (
-    <Card className={cn("relative overflow-hidden", className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">{data.stockCode}</h3>
-            <p className="text-sm text-muted-foreground">{data.companyName}</p>
+    <Card 
+      className={cn(
+        "relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl group border-0",
+        className
+      )}
+      style={{
+        background: weatherTheme.cardBg,
+        boxShadow: `0 10px 25px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6)`
+      }}
+    >
+      {/* 배경 패턴 */}
+      <div 
+        className="absolute inset-0 opacity-5"
+        style={{
+          backgroundImage: `radial-gradient(circle at 20% 50%, ${weatherTheme.primary} 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${weatherTheme.secondary} 0%, transparent 50%)`
+        }}
+      />
+      
+      {/* 상단 헤더 */}
+      <div className="relative p-6 pb-4">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="text-xl font-bold mb-1" style={{ color: weatherTheme.textPrimary }}>
+              {data.stockCode}
+            </h3>
+            <p className="text-sm opacity-80" style={{ color: weatherTheme.textSecondary }}>
+              {data.companyName}
+            </p>
           </div>
-          <Badge className={getRecommendationColor(data.recommendation)}>
+          
+          {/* 추천 배지 */}
+          <Badge 
+            className="flex items-center gap-1 px-3 py-1 text-white font-semibold shadow-lg"
+            style={{ 
+              background: signalTheme.background,
+              boxShadow: signalTheme.glow
+            }}
+          >
+            {getRecommendationIcon(data.recommendation)}
             {getRecommendationText(data.recommendation)}
           </Badge>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {/* Weather Icon and Condition */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {getWeatherIcon(data.weatherCondition)}
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {getWeatherDescription(data.weatherCondition)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                신뢰도: {data.confidence}%
-              </p>
-            </div>
-          </div>
         </div>
 
-        {/* Price Information */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-2xl font-bold text-foreground">
+        {/* 가격 정보 */}
+        <div className="mb-4">
+          <div className="flex items-baseline gap-2 mb-2">
+            <span className="text-3xl font-bold" style={{ color: weatherTheme.textPrimary }}>
               ₩{data.currentPrice.toLocaleString()}
-            </p>
-            <div className="flex items-center space-x-2">
+            </span>
+            <div className="flex items-center gap-1">
               {data.priceChange > 0 ? (
                 <TrendingUp className="w-4 h-4 text-green-500" />
               ) : (
                 <TrendingDown className="w-4 h-4 text-red-500" />
               )}
               <span className={cn(
-                "text-sm font-medium",
+                "text-sm font-semibold",
                 data.priceChange > 0 ? "text-green-600" : "text-red-600"
               )}>
                 {data.priceChange > 0 ? '+' : ''}{data.priceChange.toLocaleString()}
@@ -128,26 +151,82 @@ export default function StockWeatherCard({ data, className }: StockWeatherCardPr
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Forecast */}
-        <div className="p-3 bg-muted rounded-lg">
-          <p className="text-sm text-foreground">{data.forecast}</p>
-        </div>
+      {/* 중앙 날씨 섹션 */}
+      <div className="relative px-6 py-4">
+        <div 
+          className="rounded-2xl p-6 backdrop-blur-sm border border-white/20"
+          style={{
+            background: `linear-gradient(135deg, ${weatherTheme.primary}15, ${weatherTheme.secondary}15)`
+          }}
+        >
+          <div className="flex items-center gap-4 mb-4">
+            {getWeatherIcon(data.weatherCondition)}
+            <div className="flex-1">
+              <h4 className="text-2xl font-bold mb-1" style={{ color: weatherTheme.textPrimary }}>
+                {getWeatherLabel(data.weatherCondition)}
+              </h4>
+              <p className="text-sm opacity-80" style={{ color: weatherTheme.textSecondary }}>
+                투자 전망
+              </p>
+            </div>
+            
+            {/* 신뢰도 게이지 */}
+            <div className="text-center">
+              <div className="relative inline-block">
+                <Gauge 
+                  className="w-12 h-12 mb-1" 
+                  style={{ color: confidenceColor }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold" style={{ color: confidenceColor }}>
+                    {data.confidence}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs opacity-80" style={{ color: weatherTheme.textSecondary }}>
+                신뢰도
+              </p>
+            </div>
+          </div>
 
-        {/* Confidence Bar */}
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>예측 신뢰도</span>
-            <span>{data.confidence}%</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-2">
-            <div 
-              className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-300"
-              style={{ width: `${data.confidence}%` }}
-            />
+          {/* 예보 텍스트 */}
+          <div 
+            className="p-4 rounded-lg text-sm leading-relaxed"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+              color: weatherTheme.textPrimary
+            }}
+          >
+            {data.forecast}
           </div>
         </div>
-      </CardContent>
+      </div>
+
+      {/* 하단 신뢰도 바 */}
+      <div className="relative px-6 pb-6">
+        <div className="flex justify-between items-center text-xs mb-2" style={{ color: weatherTheme.textSecondary }}>
+          <span>예측 정확도</span>
+          <span className="font-semibold">{data.confidence}%</span>
+        </div>
+        <div className="relative h-2 bg-white/30 rounded-full overflow-hidden">
+          <div 
+            className="h-full rounded-full transition-all duration-1000 ease-out"
+            style={{ 
+              width: `${data.confidence}%`,
+              background: `linear-gradient(90deg, ${confidenceColor}, ${confidenceColor}aa)`
+            }}
+          />
+          <div 
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent transform -skew-x-12 animate-pulse"
+            style={{ animationDuration: '2s' }}
+          />
+        </div>
+      </div>
+
+      {/* 호버 효과 오버레이 */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     </Card>
   );
 }
