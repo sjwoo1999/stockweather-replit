@@ -1,0 +1,48 @@
+[작업 목표]
+현재 GitHub에 올라가 있는 StockWeather 프로젝트의 Backend와 Frontend 코드를 분석하고, 그 기반 위에서 기능을 확장하거나 리팩토링할 수 있도록 합니다. 사용자는 Replit에서 실시간 협업과 바이브 코딩 기능을 활용하며, 정확하고 단계적인 진행을 원합니다.
+
+[참고할 레포지토리 링크]
+- Backend: https://github.com/sjwoo1999/stockweatherBackend
+- Frontend: https://github.com/sjwoo1999/stockweatherFrontend
+
+[작업 방식]
+Take a deep breath and work on this carefully.
+Let’s take it slow and go through this logically, ensuring each step is sound.
+→ 무조건 빠르게 작성하지 말고, 차근차근 분석 후 개선 방안을 설계하고 코드를 작성하도록 합니다.
+
+[단계별 작업 요청]
+1️⃣ 먼저 각 레포지토리의 폴더 구조, 의존성, 주요 엔트리 파일(index.js, app.js 등)을 파악하고, 전체 아키텍처(라우팅, API 구조, 페이지 트리)를 한눈에 이해할 수 있도록 요약해 주세요.
+
+2️⃣ Backend에서는 DART 공시자료를 받아오는 API, 사용자 포트폴리오 관리 API, 알림 관련 API 등 핵심 기능이 어떻게 구성되어 있는지 상세히 분석한 뒤, 기능별 흐름도를 간단한 다이어그램 형태(예: 텍스트 박스)로 설명해 주세요.
+
+3️⃣ Frontend에서는 페이지 컴포넌트 구조, 주요 상태 관리 방식(Context, Redux, Recoil 등), 데이터 fetch 및 UI 흐름을 분석하고, 핵심 컴포넌트 간 관계도를 요약해 주세요.
+
+4️⃣ IA(Information Architecture)와 PRD(Product Requirement Document)에 기반해, 현재 코드에 부족하거나 추가해야 할 기능 목록을 도출해 주세요.
+예: 포트폴리오 종목 비교 UI, 종목 알림 상세 설정, 종목별 투자 확신도 시각화 등.
+
+5️⃣ 기존 코드의 개선이 필요한 부분(예: 불필요한 반복, 에러 처리 미흡, UX 개선 포인트 등)을 구체적으로 지적하고, 개선 방안을 단계별로 제안해 주세요.
+
+6️⃣ 위 분석을 기반으로, 각 기능 또는 모듈별 작업 단위를 분리해서 작업 계획(예: "feature/portfolio-summary", "fix/api-error-handling")을 만들어 주세요.
+
+7️⃣ 이후 작업 단위별로 구체적인 코드 스니펫(예: React 컴포넌트 템플릿, Node.js API 핸들러 개선안 등)을 제안해 주세요.
+
+8️⃣ 커밋 메시지 템플릿 예시와 PR 작성 가이드도 한글로 제공해 주세요.
+예: `feat: 종목별 투자 확신도 UI 추가 (#25)`, `fix: 공시자료 파싱 오류 수정 (#32)`
+
+[코드 작성 및 협업 기준]
+- 분석 및 코멘트는 모두 한글로 작성해 주세요.
+- 변경 이유, 로직 흐름, 개선 포인트를 명확히 서술해 주세요.
+- 작업 내역은 단계별로 나눠 진행하도록 작성해 주세요.
+- 작성된 개선안이나 코드 제안은 바로 복붙해서 테스트 가능하도록 해 주세요.
+
+[문제 접근 방식]
+Before proposing a solution, let's first identify the root causes of this problem and any underlying assumptions.
+→ 예: 데이터 불러오기 속도가 느린 원인을 먼저 분석(네트워크 병목, API 지연, 프런트 비효율적 렌더링 등) 후 해결책을 제안.
+
+[추가 관점]
+Let's analyze this issue from multiple perspectives (e.g., economic, social, ethical). What are the pros and cons from each viewpoint?
+→ 예: 종목 추천 자동화 강화 시, 투자자의 심리적 편향 유발 가능성 등을 고려.
+
+[최종 목적]
+Take a deep breath and let's work this out in a step-by-step way to be sure we have the right answer.
+→ 사용자 중심, 논리적인 순서, 꼼꼼한 품질 보장을 최우선 목표로 합니다.
