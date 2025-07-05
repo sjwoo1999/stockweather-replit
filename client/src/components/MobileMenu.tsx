@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigation } from "@/hooks/useNavigation";
 import { 
   BarChart3, 
   Briefcase, 
@@ -12,14 +13,15 @@ import {
   X
 } from "lucide-react";
 
-const navigation = [
-  { name: "주식 날씨 예보", href: "/", icon: Cloud },
-  { name: "내 포트폴리오", href: "/portfolio", icon: Briefcase },
-  { name: "종목 분석", href: "/analysis", icon: ChartBar },
-  { name: "시장 날씨", href: "/weather", icon: BarChart3 },
-  { name: "공시정보", href: "/dart", icon: FileText },
-  { name: "설정", href: "/settings", icon: Settings },
-];
+// 아이콘 매핑
+const iconMap = {
+  Cloud,
+  Briefcase,
+  ChartBar,
+  BarChart3,
+  FileText,
+  Settings,
+};
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -27,22 +29,8 @@ interface MobileMenuProps {
 }
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
-  const [location] = useLocation();
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        onClose();
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [onClose]);
-
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
-  };
+  const { user } = useAuth();
+  const { navigationItems, isActive } = useNavigation();
 
   if (!isOpen) return null;
 
@@ -59,36 +47,60 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="py-4">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.href;
+        
+        <nav className="flex-1 px-2 py-4 space-y-2">
+          {navigationItems.map((item) => {
+            const Icon = iconMap[item.icon as keyof typeof iconMap];
+            const active = isActive(item.href);
             
             return (
               <Link 
                 key={item.name} 
                 href={item.href}
                 className={cn(
-                  "block px-4 py-2 text-sm font-medium",
-                  isActive 
+                  "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                  active 
                     ? "text-primary bg-primary/10 border-r-4 border-primary" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 )}
                 onClick={onClose}
+                aria-current={active ? "page" : undefined}
+                title={item.description}
               >
                 <Icon className="w-5 h-5 mr-3 inline" />
                 {item.name}
               </Link>
             );
           })}
-          <button
-            onClick={handleLogout}
-            className="block w-full text-left px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
-          >
-            <LogOut className="w-5 h-5 mr-3 inline" />
-            로그아웃
-          </button>
-        </div>
+        </nav>
+        
+        {user && (
+          <div className="border-t border-border p-4">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-primary font-medium">
+                  {user.firstName?.[0] || user.email?.[0] || 'U'}
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-foreground">
+                  {user.firstName || user.email}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => window.location.href = "/api/logout"}
+              className="flex items-center w-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              로그아웃
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
