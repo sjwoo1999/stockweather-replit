@@ -195,6 +195,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Company information from DART
+  app.get('/api/dart/company/:code', async (req: any, res) => {
+    try {
+      const stockCode = req.params.code;
+      const companyInfo = await dartApi.getCompanyInfo(stockCode);
+      
+      if (!companyInfo) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      
+      res.json(companyInfo);
+    } catch (error) {
+      console.error(`Error fetching company info for ${req.params.code}:`, error);
+      res.status(500).json({ message: "Failed to fetch company information" });
+    }
+  });
+
   // Alert routes
   app.get('/api/alerts', isAuthenticated, async (req: any, res) => {
     try {
