@@ -148,6 +148,7 @@ StockWeather는 복잡한 주식 시장 정보를 직관적인 날씨 예보 스
 
 ```
 Changelog:
+- July 06, 2025. PC 네비게이션 문제 해결 - 클릭 이벤트 처리 개선, CSS 스타일 간섭 제거
 - July 05, 2025. Initial setup
 ```
 
