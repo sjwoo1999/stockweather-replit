@@ -1,11 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertPortfolioSchema, insertStockHoldingSchema, insertUserAlertSchema } from "@shared/schema";
 import { stockApi } from "./services/stockApi";
 import { weatherApi } from "./services/weatherApi";
 import { dartApi } from "./services/dartApi";
+import { marketWeatherService } from "./services/marketWeatherService";
+import { stockMasterService } from "./services/stockMasterService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -390,5 +393,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // WebSocket 서버 설정 (실시간 검색용)
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // WebSocket 연결 및 이벤트 처리
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('🔌 WebSocket client connected');
+    
+    // 클라이언트 연결 확인 응답
+    ws.send(JSON.stringify({
+      type: 'connection',
+      message: '실시간 검색 서비스에 연결되었습니다.',
+      timestamp: new Date().toISOString()
+    }));
+    
+    // 메시지 수신 처리
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // 검색 요청 처리
+        if (data.type === 'search') {
+          const searchQuery = data.query;
+          const limit = data.limit || 10;
+          
+          if (!searchQuery || searchQuery.length < 1) {
+            ws.send(JSON.stringify({
+              type: 'searchResult',
+              results: [],
+              query: searchQuery,
+              timestamp: new Date().toISOString()
+            }));
+            return;
+          }
+          
+          // 실시간 검색 수행
+          const results = await storage.searchStocks(searchQuery, limit);
+          
+          // 클라이언트 형식에 맞게 변환
+          const searchResults = results.map(stock => ({
+            code: stock.stockCode,
+            name: stock.stockName,
+            market: stock.market,
+            sector: stock.sector,
+            industry: stock.industry,
+            marketCap: stock.marketCap
+          }));
+          
+          // 검색 결과 전송
+          ws.send(JSON.stringify({
+            type: 'searchResult',
+            results: searchResults,
+            query: searchQuery,
+            count: searchResults.length,
+            timestamp: new Date().toISOString()
+          }));
+          
+          console.log(`🔍 실시간 검색 완료: "${searchQuery}" -> ${searchResults.length}개 결과`);
+        }
+        
+        // 종목 추천 요청 처리
+        else if (data.type === 'suggest') {
+          const partial = data.partial || '';
+          
+          if (partial.length < 1) {
+            ws.send(JSON.stringify({
+              type: 'suggestions',
+              suggestions: [],
+              partial: partial,
+              timestamp: new Date().toISOString()
+            }));
+            return;
+          }
+          
+          // 부분 검색으로 추천 결과 생성
+          const suggestions = await storage.searchStocks(partial, 5);
+          
+          ws.send(JSON.stringify({
+            type: 'suggestions',
+            suggestions: suggestions.map(stock => ({
+              code: stock.stockCode,
+              name: stock.stockName,
+              displayText: `${stock.stockName} (${stock.stockCode})`
+            })),
+            partial: partial,
+            timestamp: new Date().toISOString()
+          }));
+        }
+        
+      } catch (error) {
+        console.error('❌ WebSocket 메시지 처리 오류:', error);
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: '검색 처리 중 오류가 발생했습니다.',
+          timestamp: new Date().toISOString()
+        }));
+      }
+    });
+    
+    // 연결 종료 처리
+    ws.on('close', () => {
+      console.log('🔌 WebSocket client disconnected');
+    });
+    
+    // 오류 처리
+    ws.on('error', (error) => {
+      console.error('❌ WebSocket 오류:', error);
+    });
+  });
+  
   return httpServer;
 }

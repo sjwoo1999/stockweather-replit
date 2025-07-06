@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import RealtimeSearch from "@/components/RealtimeSearch";
 import { 
-  Search, 
   TrendingUp, 
   TrendingDown, 
   DollarSign, 
@@ -20,13 +18,11 @@ import { cn } from "@/lib/utils";
 
 export default function StockAnalysis() {
   const [selectedStock, setSelectedStock] = useState("005930");
-  const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: searchResults } = useQuery({
-    queryKey: ["/api/stocks/search", { q: searchQuery }],
-    enabled: searchQuery.length > 0,
-    retry: false,
-  });
+  // 종목 선택 핸들러
+  const handleStockSelect = (stock: { code: string; name: string }) => {
+    setSelectedStock(stock.code);
+  };
 
   const { data: stockQuote, isLoading: stockQuoteLoading } = useQuery({
     queryKey: [`/api/stocks/${selectedStock}/quote`],
@@ -98,44 +94,14 @@ export default function StockAnalysis() {
         <p className="text-muted-foreground">개별 종목의 상세 정보와 차트를 분석하세요</p>
       </div>
 
-      {/* Stock Search */}
+      {/* 실시간 검색 */}
       <Card className="mb-8">
         <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="종목명 또는 코드를 입력하세요"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline">검색</Button>
-          </div>
-          
-          {searchResults && searchResults.length > 0 && (
-            <div className="mt-4 border border-border rounded-md max-h-40 overflow-y-auto">
-              {searchResults.map((stock: any) => (
-                <div
-                  key={stock.code}
-                  className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
-                  onClick={() => {
-                    setSelectedStock(stock.code);
-                    setSearchQuery("");
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-foreground">{stock.name}</div>
-                      <div className="text-sm text-muted-foreground">{stock.code}</div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">{stock.market}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <RealtimeSearch
+            onSelectStock={handleStockSelect}
+            placeholder="종목명 또는 코드를 입력하세요 (실시간 검색)"
+            maxResults={10}
+          />
         </CardContent>
       </Card>
 
