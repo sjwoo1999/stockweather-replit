@@ -312,7 +312,7 @@ export default function DartDisclosures() {
                             </div>
                           </div>
                         </div>
-                        );
+                        )
                       })}
                     </div>
                   )}
