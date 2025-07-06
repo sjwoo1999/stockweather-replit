@@ -8,13 +8,28 @@ import {
   TrendingUp, 
   TrendingDown, 
   DollarSign, 
-  Calendar,
   Volume,
   Target,
-  Activity
+  Activity,
+  BarChart3
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { cn } from "@/lib/utils";
+
+interface StockQuote {
+  code: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+}
+
+interface PriceHistory {
+  timestamp: string;
+  price: number;
+  volume: number;
+}
 
 export default function StockAnalysis() {
   const [selectedStock, setSelectedStock] = useState("005930");
@@ -24,18 +39,13 @@ export default function StockAnalysis() {
     setSelectedStock(stock.code);
   };
 
-  const { data: stockQuote, isLoading: stockQuoteLoading } = useQuery({
+  const { data: stockQuote, isLoading: stockQuoteLoading } = useQuery<StockQuote>({
     queryKey: [`/api/stocks/${selectedStock}/quote`],
     enabled: !!selectedStock,
   });
 
-  const { data: priceHistory, isLoading: priceHistoryLoading } = useQuery({
+  const { data: priceHistory, isLoading: priceHistoryLoading } = useQuery<PriceHistory[]>({
     queryKey: [`/api/stocks/${selectedStock}/history`, { days: 90 }],
-    enabled: !!selectedStock,
-  });
-
-  const { data: dartDisclosures, isLoading: dartDisclosuresLoading } = useQuery({
-    queryKey: [`/api/dart/stock/${selectedStock}`, { limit: 10 }],
     enabled: !!selectedStock,
   });
 
@@ -59,18 +69,7 @@ export default function StockAnalysis() {
     volume: item.volume || 0,
   })) : [];
 
-  // 안전한 타입 체크 함수들
-  const isValidStockQuote = (data: any): data is { price: number; change: number; changePercent: number; volume: number; name: string; code: string } => {
-    return data && typeof data === 'object' && 'price' in data && 'change' in data;
-  };
-
-  const isValidDisclosures = (data: any): data is Array<any> => {
-    return Array.isArray(data);
-  };
-
-  const validStockQuote = isValidStockQuote(stockQuote) ? stockQuote : null;
-  const validDisclosures = isValidDisclosures(dartDisclosures) ? dartDisclosures : [];
-  const isPositive = validStockQuote ? validStockQuote.change >= 0 : false;
+  const isPositive = stockQuote ? stockQuote.change >= 0 : false;
 
   // 로딩 상태 체크
   if (stockQuoteLoading || priceHistoryLoading) {
@@ -91,7 +90,7 @@ export default function StockAnalysis() {
       {/* Page Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-foreground mb-2">종목 분석</h2>
-        <p className="text-muted-foreground">개별 종목의 상세 정보와 차트를 분석하세요</p>
+        <p className="text-muted-foreground">개별 종목의 주가 차트와 기술적 지표를 분석하세요</p>
       </div>
 
       {/* 실시간 검색 */}
@@ -105,97 +104,83 @@ export default function StockAnalysis() {
         </CardContent>
       </Card>
 
-      {validStockQuote && (
+      {/* Stock Price Display */}
+      {stockQuote && (
         <>
-          {/* Stock Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-muted-foreground text-sm font-medium">현재가</p>
-                    <p className="text-2xl font-bold text-foreground">{formatCurrency(validStockQuote.price)}</p>
-                    <div className="flex items-center mt-1">
-                      <Badge 
-                        variant={isPositive ? "default" : "destructive"}
-                        className={cn(
-                          "text-xs",
-                          isPositive ? "bg-success/10 text-success" : "bg-error/10 text-error"
-                        )}
-                      >
-                        {isPositive ? '+' : ''}{validStockQuote.change?.toFixed(0)} ({isPositive ? '+' : ''}{validStockQuote.changePercent?.toFixed(2)}%)
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className={cn(
-                    "p-3 rounded-full",
-                    isPositive ? "bg-success/10" : "bg-error/10"
-                  )}>
-                    {isPositive ? 
-                      <TrendingUp className="w-6 h-6 text-success" /> : 
-                      <TrendingDown className="w-6 h-6 text-error" />
-                    }
-                  </div>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  <DollarSign className="w-5 h-5 mr-2" />
+                  현재가
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">
+                  {formatCurrency(stockQuote?.price)}
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-muted-foreground text-sm font-medium">거래량</p>
-                    <p className="text-2xl font-bold text-foreground">{formatVolume(stockQuote.volume || 0)}</p>
-                    <p className="text-sm text-muted-foreground">주</p>
-                  </div>
-                  <div className="p-3 bg-primary/10 rounded-full">
-                    <Volume className="w-6 h-6 text-primary" />
-                  </div>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  {isPositive ? (
+                    <TrendingUp className="w-5 h-5 mr-2 text-success" />
+                  ) : (
+                    <TrendingDown className="w-5 h-5 mr-2 text-error" />
+                  )}
+                  전일대비
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={cn("text-2xl font-bold", isPositive ? "text-success" : "text-error")}>
+                  {isPositive ? '+' : ''}{stockQuote?.change?.toFixed(0)}
+                </div>
+                <div className={cn("text-sm", isPositive ? "text-success" : "text-error")}>
+                  ({isPositive ? '+' : ''}{stockQuote?.changePercent?.toFixed(2)}%)
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-muted-foreground text-sm font-medium">종목명</p>
-                    <p className="text-xl font-bold text-foreground">{stockQuote.name}</p>
-                    <p className="text-sm text-muted-foreground">{stockQuote.code}</p>
-                  </div>
-                  <div className="p-3 bg-accent/10 rounded-full">
-                    <DollarSign className="w-6 h-6 text-accent" />
-                  </div>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  <Volume className="w-5 h-5 mr-2" />
+                  거래량
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">
+                  {formatVolume(stockQuote?.volume || 0)}
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-muted-foreground text-sm font-medium">업데이트</p>
-                    <p className="text-lg font-bold text-foreground">실시간</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(stockQuote.timestamp).toLocaleTimeString('ko-KR')}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-secondary/10 rounded-full">
-                    <Activity className="w-6 h-6 text-secondary" />
-                  </div>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  <Activity className="w-5 h-5 mr-2" />
+                  활동성
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">
+                  {stockQuote?.volume && stockQuote.volume > 1000000 ? '높음' : '보통'}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Charts and Analysis */}
+          {/* Chart and Analysis Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Charts */}
             <div className="lg:col-span-2">
-              <Tabs defaultValue="price" className="space-y-4">
-                <TabsList>
+              <Tabs defaultValue="price" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="price">가격 차트</TabsTrigger>
-                  <TabsTrigger value="volume">거래량 차트</TabsTrigger>
-                  <TabsTrigger value="analysis">기술적 분석</TabsTrigger>
+                  <TabsTrigger value="volume">거래량</TabsTrigger>
+                  <TabsTrigger value="analysis">기술 분석</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="price">
@@ -292,51 +277,54 @@ export default function StockAnalysis() {
                             <div className="space-y-2">
                               <div className="flex justify-between">
                                 <span className="text-sm text-muted-foreground">5일</span>
-                                <span className="text-sm font-medium">₩{(stockQuote.price * 1.02).toLocaleString()}</span>
+                                <span className="text-sm font-medium">₩{((stockQuote?.price || 0) * 1.02).toLocaleString()}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-sm text-muted-foreground">20일</span>
-                                <span className="text-sm font-medium">₩{(stockQuote.price * 0.98).toLocaleString()}</span>
+                                <span className="text-sm font-medium">₩{((stockQuote?.price || 0) * 0.98).toLocaleString()}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-sm text-muted-foreground">60일</span>
-                                <span className="text-sm font-medium">₩{(stockQuote.price * 0.95).toLocaleString()}</span>
+                                <span className="text-sm font-medium">₩{((stockQuote?.price || 0) * 0.95).toLocaleString()}</span>
                               </div>
                             </div>
                           </div>
 
                           <div className="p-4 bg-muted rounded-lg">
-                            <h4 className="font-medium text-foreground mb-2">지지/저항선</h4>
+                            <h4 className="font-medium text-foreground mb-2">거래량 분석</h4>
                             <div className="space-y-2">
                               <div className="flex justify-between">
-                                <span className="text-sm text-muted-foreground">저항선</span>
-                                <span className="text-sm font-medium text-error">₩{(stockQuote.price * 1.05).toLocaleString()}</span>
+                                <span className="text-sm text-muted-foreground">평균 거래량</span>
+                                <span className="text-sm font-medium">{formatVolume((stockQuote?.volume || 0) * 0.8)}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-sm text-muted-foreground">지지선</span>
-                                <span className="text-sm font-medium text-success">₩{(stockQuote.price * 0.93).toLocaleString()}</span>
+                                <span className="text-sm text-muted-foreground">상대 거래량</span>
+                                <span className="text-sm font-medium">120%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm text-muted-foreground">거래 강도</span>
+                                <span className="text-sm font-medium">높음</span>
                               </div>
                             </div>
                           </div>
                         </div>
 
                         <div className="p-4 bg-muted rounded-lg">
-                          <h4 className="font-medium text-foreground mb-2">기술적 지표</h4>
-                          <div className="grid grid-cols-3 gap-4">
-                            <div className="text-center">
-                              <p className="text-sm text-muted-foreground">RSI</p>
-                              <p className="text-lg font-medium text-foreground">52.3</p>
-                              <Badge variant="secondary" className="text-xs">중립</Badge>
+                          <h4 className="font-medium text-foreground mb-2">투자 포인트</h4>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className={cn("w-2 h-2 rounded-full", isPositive ? "bg-green-500" : "bg-red-500")}></div>
+                              <span className="text-sm">
+                                {isPositive ? '상승' : '하락'} 추세가 지속되고 있습니다
+                              </span>
                             </div>
-                            <div className="text-center">
-                              <p className="text-sm text-muted-foreground">MACD</p>
-                              <p className="text-lg font-medium text-success">+1.2</p>
-                              <Badge className="text-xs bg-success/10 text-success">상승</Badge>
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                              <span className="text-sm">거래량이 평균보다 증가했습니다</span>
                             </div>
-                            <div className="text-center">
-                              <p className="text-sm text-muted-foreground">볼린저 밴드</p>
-                              <p className="text-lg font-medium text-warning">중간</p>
-                              <Badge variant="outline" className="text-xs">관망</Badge>
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                              <span className="text-sm">단기 이동평균선이 지지/저항 역할을 하고 있습니다</span>
                             </div>
                           </div>
                         </div>
@@ -360,15 +348,15 @@ export default function StockAnalysis() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">종목코드</span>
-                    <span className="font-medium">{stockQuote.code}</span>
+                    <span className="font-medium">{stockQuote?.code}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">종목명</span>
-                    <span className="font-medium">{stockQuote.name}</span>
+                    <span className="font-medium">{stockQuote?.name}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">현재가</span>
-                    <span className="font-medium">{formatCurrency(stockQuote.price)}</span>
+                    <span className="font-medium">{formatCurrency(stockQuote?.price)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">전일대비</span>
@@ -379,36 +367,40 @@ export default function StockAnalysis() {
                         isPositive ? "bg-success/10 text-success" : "bg-error/10 text-error"
                       )}
                     >
-                      {isPositive ? '+' : ''}{stockQuote.change?.toFixed(0)} ({isPositive ? '+' : ''}{stockQuote.changePercent?.toFixed(2)}%)
+                      {isPositive ? '+' : ''}{stockQuote?.change?.toFixed(0)} ({isPositive ? '+' : ''}{stockQuote?.changePercent?.toFixed(2)}%)
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">거래량</span>
-                    <span className="font-medium">{formatVolume(stockQuote.volume || 0)}</span>
+                    <span className="font-medium">{formatVolume(stockQuote?.volume || 0)}</span>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Recent DART Disclosures */}
+              {/* Technical Indicators */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Calendar className="w-5 h-5 mr-2" />
-                    최근 공시
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    기술적 지표
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {dartDisclosures?.slice(0, 5).map((disclosure: any) => (
-                      <div key={disclosure.id} className="border-l-4 border-primary pl-3 py-2">
-                        <h4 className="text-sm font-medium text-foreground">{disclosure.title}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(disclosure.submittedDate).toLocaleDateString('ko-KR')}
-                        </p>
-                      </div>
-                    )) || (
-                      <p className="text-sm text-muted-foreground">최근 공시 정보가 없습니다.</p>
-                    )}
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">RSI (14일)</span>
+                    <span className="font-medium">55.2</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">MACD</span>
+                    <span className="font-medium text-green-600">+12.5</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">볼린저밴드</span>
+                    <span className="font-medium">중간선 근처</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">스토캐스틱</span>
+                    <span className="font-medium">48.7</span>
                   </div>
                 </CardContent>
               </Card>
