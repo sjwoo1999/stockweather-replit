@@ -16,9 +16,6 @@ export interface MarketWeatherData {
 export interface StockWeatherData {
   stockCode: string;
   companyName: string;
-  currentPrice: number;
-  priceChange: number;
-  priceChangePercent: number;
   weatherCondition: 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy' | 'windy' | 'drizzle';
   forecast: string;
   confidence: number;
@@ -53,14 +50,14 @@ export class MarketWeatherService {
     console.log('🌤️ Generating market weather analysis...');
     
     try {
-      // 1. 주요 종목 데이터 수집
-      const topStocks = await this.getTopStocksByMarketCap(30);
+      // 1. 전체 상장 종목 데이터 수집 (95개 모두)
+      const allStocks = await this.getTopStocksByMarketCap(95);
       
-      // 2. 최신 공시 정보 수집
-      const recentDisclosures = await dartApi.getRecentDisclosures(50);
+      // 2. 최신 공시 정보 수집 (확대)
+      const recentDisclosures = await dartApi.getRecentDisclosures(100);
       
-      // 3. 종목별 날씨 데이터 생성
-      const stockWeatherData = await this.generateStockWeatherData(topStocks, recentDisclosures);
+      // 3. 전체 종목별 날씨 데이터 생성
+      const stockWeatherData = await this.generateStockWeatherData(allStocks, recentDisclosures);
       
       // 4. 전체 시장 날씨 계산
       const marketWeather = this.calculateMarketWeather(stockWeatherData);
@@ -75,7 +72,7 @@ export class MarketWeatherService {
       
       return {
         marketWeather,
-        topStocks: stockWeatherData.slice(0, 20), // 상위 20개만 반환
+        topStocks: stockWeatherData, // 전체 95개 종목 반환
         sectorAnalysis,
         marketInsights
       };
@@ -89,16 +86,24 @@ export class MarketWeatherService {
   }
   
   /**
-   * 시가총액 상위 종목 조회
+   * 전체 상장 종목 조회 (시가총액 기준 정렬)
    */
   private async getTopStocksByMarketCap(limit: number): Promise<StockMaster[]> {
     const allStocks = await storage.getAllStocks();
     
-    // 시가총액 기준 정렬
-    return allStocks
-      .filter(stock => stock.marketCap && parseFloat(stock.marketCap) > 0)
-      .sort((a, b) => parseFloat(b.marketCap || '0') - parseFloat(a.marketCap || '0'))
-      .slice(0, limit);
+    console.log(`📊 총 ${allStocks.length}개 종목 데이터 로드됨`);
+    
+    // 시가총액 기준 정렬하여 상위 종목 반환
+    const sortedStocks = allStocks
+      .filter(stock => stock.stockName && stock.stockCode) // 기본 정보 있는 종목만
+      .sort((a, b) => {
+        const aMarketCap = parseFloat(a.marketCap || '0');
+        const bMarketCap = parseFloat(b.marketCap || '0');
+        return bMarketCap - aMarketCap; // 큰 것부터 정렬
+      });
+    
+    console.log(`🎯 상위 ${Math.min(limit, sortedStocks.length)}개 종목 선택됨`);
+    return sortedStocks.slice(0, limit);
   }
   
   /**
@@ -112,41 +117,38 @@ export class MarketWeatherService {
     
     for (const stock of stocks) {
       try {
-        // 실제 주가 데이터는 외부 API에서 가져와야 하므로 현재는 시뮬레이션
-        const priceData = this.simulateStockPrice(stock);
-        
         // 해당 종목 관련 공시 찾기
         const relatedDisclosures = disclosures.filter(d => 
           d.stockCode === stock.stockCode || 
           d.companyName?.includes(stock.stockName?.substring(0, 2) || '')
         );
         
-        // 날씨 조건 계산
-        const weatherCondition = this.calculateWeatherCondition(
-          priceData.priceChangePercent,
+        // DART 기반 분석 점수 계산 (가격 대신 공시/재무 기반)
+        const analysisScore = this.calculateAnalysisScore(relatedDisclosures.length, stock.sector || '');
+        
+        // 날씨 조건 계산 (DART 기반)
+        const weatherCondition = this.calculateWeatherConditionFromDart(
           relatedDisclosures.length,
-          stock.sector || ''
+          stock.sector || '',
+          analysisScore
         );
         
-        // 예측 및 추천 생성
-        const { forecast, recommendation, confidence } = this.generateStockForecast(
+        // DART 기반 예측 및 추천 생성
+        const { forecast, recommendation, confidence } = this.generateDartBasedForecast(
           stock,
-          priceData,
-          relatedDisclosures
+          relatedDisclosures,
+          analysisScore
         );
         
         weatherData.push({
           stockCode: stock.stockCode,
           companyName: stock.stockName || 'Unknown',
-          currentPrice: priceData.currentPrice,
-          priceChange: priceData.priceChange,
-          priceChangePercent: priceData.priceChangePercent,
           weatherCondition,
           forecast,
           confidence,
           recommendation,
-          marketCap: stock.marketCap,
-          sector: stock.sector,
+          marketCap: stock.marketCap || undefined,
+          sector: stock.sector || undefined,
           lastUpdated: new Date()
         });
         
@@ -159,7 +161,111 @@ export class MarketWeatherService {
   }
   
   /**
-   * 주가 데이터 시뮬레이션 (실제 구현에서는 외부 API 사용)
+   * DART 기반 분석 점수 계산
+   */
+  private calculateAnalysisScore(disclosureCount: number, sector: string): number {
+    let score = 50; // 기본 점수
+    
+    // 공시 빈도에 따른 점수 조정
+    if (disclosureCount === 0) score += 10; // 공시가 없으면 안정성 증가
+    else if (disclosureCount > 3) score -= 15; // 공시가 많으면 변동성 증가
+    else score += 5; // 적당한 공시는 투명성으로 플러스
+    
+    // 섹터별 가중치
+    const sectorBonus = this.getSectorStabilityScore(sector);
+    score += sectorBonus;
+    
+    return Math.max(0, Math.min(100, score));
+  }
+  
+  /**
+   * 섹터별 안정성 점수
+   */
+  private getSectorStabilityScore(sector: string): number {
+    const stabilityMap: { [key: string]: number } = {
+      '의료정밀': 15,
+      '화학': 10,
+      '금융업': 8,
+      '전기전자': 5,
+      '서비스업': 3,
+      '운수장비': 0,
+      '건설업': -5,
+      '기타': 0
+    };
+    return stabilityMap[sector] || 0;
+  }
+  
+  /**
+   * DART 기반 날씨 조건 계산
+   */
+  private calculateWeatherConditionFromDart(
+    disclosureCount: number, 
+    sector: string, 
+    analysisScore: number
+  ): 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy' | 'windy' | 'drizzle' {
+    
+    // 분석 점수 기반 1차 분류
+    if (analysisScore >= 80) return 'sunny';      // 매우 긍정적
+    if (analysisScore >= 65) return 'cloudy';     // 긍정적
+    if (analysisScore >= 50) return 'drizzle';    // 보통
+    if (analysisScore >= 35) return 'rainy';      // 부정적
+    if (analysisScore >= 20) return 'windy';      // 매우 부정적
+    return 'stormy';                              // 위험
+  }
+  
+  /**
+   * DART 기반 예측 및 추천 생성
+   */
+  private generateDartBasedForecast(
+    stock: StockMaster,
+    disclosures: any[],
+    analysisScore: number
+  ): { forecast: string; recommendation: 'buy' | 'hold' | 'sell'; confidence: number } {
+    
+    const recentDisclosures = disclosures.slice(0, 3);
+    let forecast = '';
+    let recommendation: 'buy' | 'hold' | 'sell' = 'hold';
+    let confidence = Math.floor(analysisScore * 0.8 + 20); // 20-100 범위
+    
+    // 공시 기반 예측 생성
+    if (recentDisclosures.length === 0) {
+      forecast = `${stock.stockName}은(는) 최근 공시가 없어 안정적인 모습을 보이고 있습니다. `;
+      if (analysisScore >= 70) {
+        forecast += '섹터 전망이 양호하여 중장기 투자에 적합해 보입니다.';
+        recommendation = 'buy';
+      } else {
+        forecast += '현 상황 유지가 예상되며 관망하는 것이 좋겠습니다.';
+        recommendation = 'hold';
+      }
+    } else if (recentDisclosures.length <= 2) {
+      forecast = `${stock.stockName}은(는) 적절한 수준의 공시를 통해 투명한 경영을 보여주고 있습니다. `;
+      if (analysisScore >= 60) {
+        forecast += '긍정적인 기업 활동이 기대됩니다.';
+        recommendation = 'buy';
+      } else {
+        forecast += '신중한 접근이 필요합니다.';
+        recommendation = 'hold';
+      }
+    } else {
+      forecast = `${stock.stockName}은(는) 최근 많은 공시가 있어 변동성이 클 수 있습니다. `;
+      if (analysisScore >= 50) {
+        forecast += '주요 변화가 예상되니 주의 깊게 지켜봐야 합니다.';
+        recommendation = 'hold';
+      } else {
+        forecast += '불확실성이 높아 투자에 주의가 필요합니다.';
+        recommendation = 'sell';
+        confidence = Math.max(30, confidence - 10);
+      }
+    }
+    
+    // 섹터 전망 추가
+    forecast += ` (${stock.sector || '기타'} 섹터)`;
+    
+    return { forecast, recommendation, confidence };
+  }
+  
+  /**
+   * 주가 데이터 시뮬레이션 (더 이상 사용하지 않음)
    */
   private simulateStockPrice(stock: StockMaster) {
     const basePrice = this.getBasePrice(stock.stockCode);
@@ -322,46 +428,57 @@ export class MarketWeatherService {
   }
   
   /**
-   * 전체 시장 날씨 계산
+   * 전체 시장 날씨 계산 (DART 기반)
    */
   private calculateMarketWeather(stockData: StockWeatherData[]): MarketWeatherData {
     if (stockData.length === 0) {
       return this.getDefaultMarketWeather().marketWeather;
     }
     
-    // 평균 가격 변동률
-    const avgChange = stockData.reduce((sum, stock) => sum + stock.priceChangePercent, 0) / stockData.length;
+    // DART 기반 긍정적 종목 비율
+    const positiveStocks = stockData.filter(s => 
+      ['sunny', 'cloudy'].includes(s.weatherCondition)
+    ).length;
+    const positiveRatio = positiveStocks / stockData.length;
     
-    // 상승 종목 비율
-    const upStocks = stockData.filter(s => s.priceChangePercent > 0).length;
-    const upRatio = upStocks / stockData.length;
+    // 평균 신뢰도
+    const avgConfidence = stockData.reduce((sum, s) => sum + s.confidence, 0) / stockData.length;
     
-    // 변동성 계산 (표준편차)
-    const volatility = this.calculateVolatility(stockData.map(s => s.priceChangePercent));
+    // 신뢰도 변동성 계산
+    const confidenceVariance = this.calculateConfidenceVolatility(stockData.map(s => s.confidence));
     
     // 전체 날씨 조건 결정
     let overall: MarketWeatherData['overall'];
-    if (upRatio > 0.7 && avgChange > 1) overall = 'sunny';
-    else if (upRatio > 0.5 && avgChange > 0) overall = 'cloudy';
-    else if (upRatio > 0.3) overall = 'rainy';
+    if (positiveRatio > 0.7 && avgConfidence > 70) overall = 'sunny';
+    else if (positiveRatio > 0.5) overall = 'cloudy';
+    else if (positiveRatio > 0.3) overall = 'rainy';
     else overall = 'stormy';
     
     // 트렌드 결정
     let trend: MarketWeatherData['trend'];
-    if (avgChange > 0.5) trend = 'up';
-    else if (avgChange < -0.5) trend = 'down';
+    if (positiveRatio > 0.6) trend = 'up';
+    else if (positiveRatio < 0.4) trend = 'down';
     else trend = 'stable';
     
     return {
       overall,
-      temperature: Math.round(50 + avgChange * 10), // 시장 심리 점수
-      humidity: Math.round(volatility * 100), // 변동성
-      windSpeed: Math.round(upRatio * 100), // 거래 활동
-      pressure: Math.round(60 - avgChange * 5), // 시장 압력
+      temperature: Math.round(positiveRatio * 100), // 긍정적 종목 비율
+      humidity: Math.round(100 - avgConfidence), // 불확실성 (신뢰도 역수)
+      windSpeed: Math.round(positiveRatio * 100), // 시장 활동성
+      pressure: Math.round(avgConfidence), // 시장 안정성
       trend,
-      confidence: Math.round(70 + Math.min(upRatio * 30, 25)),
+      confidence: Math.round(avgConfidence),
       lastUpdated: new Date()
     };
+  }
+  
+  /**
+   * 신뢰도 변동성 계산
+   */
+  private calculateConfidenceVolatility(confidences: number[]): number {
+    const mean = confidences.reduce((sum, val) => sum + val, 0) / confidences.length;
+    const variance = confidences.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / confidences.length;
+    return Math.sqrt(variance);
   }
   
   /**
@@ -374,7 +491,7 @@ export class MarketWeatherService {
   }
   
   /**
-   * 섹터별 날씨 계산
+   * 섹터별 날씨 계산 (DART 기반)
    */
   private calculateSectorWeather(stockData: StockWeatherData[]): SectorWeatherData[] {
     const sectorMap = new Map<string, StockWeatherData[]>();
@@ -390,21 +507,29 @@ export class MarketWeatherService {
     
     // 섹터별 분석
     return Array.from(sectorMap.entries()).map(([sector, stocks]) => {
-      const avgChange = stocks.reduce((sum, s) => sum + s.priceChangePercent, 0) / stocks.length;
-      const upRatio = stocks.filter(s => s.priceChangePercent > 0).length / stocks.length;
+      // DART 기반 긍정적 종목 비율 계산
+      const positiveStocks = stocks.filter(s => 
+        ['sunny', 'cloudy'].includes(s.weatherCondition)
+      ).length;
+      const positiveRatio = positiveStocks / stocks.length;
       
+      // 평균 신뢰도
+      const avgConfidence = stocks.reduce((sum, s) => sum + s.confidence, 0) / stocks.length;
+      
+      // 섹터 날씨 조건 결정
       let weatherCondition: SectorWeatherData['weatherCondition'];
-      if (avgChange > 2) weatherCondition = 'sunny';
-      else if (avgChange > 0) weatherCondition = 'cloudy';
-      else if (avgChange > -2) weatherCondition = 'rainy';
+      if (positiveRatio > 0.7) weatherCondition = 'sunny';
+      else if (positiveRatio > 0.5) weatherCondition = 'cloudy';
+      else if (positiveRatio > 0.3) weatherCondition = 'rainy';
       else weatherCondition = 'stormy';
       
-      const sortedStocks = stocks.sort((a, b) => b.priceChangePercent - a.priceChangePercent);
+      // 신뢰도 기준 정렬 (높은 신뢰도 순)
+      const sortedStocks = stocks.sort((a, b) => b.confidence - a.confidence);
       
       return {
         sector,
         weatherCondition,
-        averageChange: parseFloat(avgChange.toFixed(2)),
+        averageChange: parseFloat(((positiveRatio - 0.5) * 100).toFixed(2)), // 긍정 비율을 % 변화로 표현
         stockCount: stocks.length,
         topPerformers: sortedStocks.slice(0, 3).map(s => s.companyName),
         bottomPerformers: sortedStocks.slice(-3).reverse().map(s => s.companyName)

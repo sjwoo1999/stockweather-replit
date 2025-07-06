@@ -23,13 +23,13 @@ import { getStockWeatherTheme, getSignalTheme, getConfidenceColor } from "@/lib/
 interface StockWeatherData {
   stockCode: string;
   companyName: string;
-  currentPrice: number;
-  priceChange: number;
-  priceChangePercent: number;
   weatherCondition: 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy' | 'windy' | 'drizzle';
   forecast: string;
   confidence: number;
   recommendation: 'buy' | 'hold' | 'sell';
+  marketCap?: string;
+  sector?: string;
+  lastUpdated: string; // API에서 직렬화된 날짜 문자열
 }
 
 interface StockWeatherCardProps {
@@ -129,26 +129,22 @@ export default function StockWeatherCard({ data, className }: StockWeatherCardPr
           </Badge>
         </div>
 
-        {/* 가격 정보 */}
+        {/* 기업 정보 */}
         <div className="mb-4">
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className="text-3xl font-bold" style={{ color: weatherTheme.textPrimary }}>
-              ₩{data.currentPrice.toLocaleString()}
-            </span>
-            <div className="flex items-center gap-1">
-              {data.priceChange > 0 ? (
-                <TrendingUp className="w-4 h-4 text-green-500" />
-              ) : (
-                <TrendingDown className="w-4 h-4 text-red-500" />
-              )}
-              <span className={cn(
-                "text-sm font-semibold",
-                data.priceChange > 0 ? "text-green-600" : "text-red-600"
-              )}>
-                {data.priceChange > 0 ? '+' : ''}{data.priceChange.toLocaleString()}
-                ({data.priceChangePercent > 0 ? '+' : ''}{data.priceChangePercent.toFixed(2)}%)
-              </span>
-            </div>
+          <div className="flex items-center gap-4 mb-2">
+            {data.sector && (
+              <Badge variant="outline" className="text-xs">
+                {data.sector}
+              </Badge>
+            )}
+            {data.marketCap && (
+              <Badge variant="outline" className="text-xs">
+                {data.marketCap}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-xs opacity-80" style={{ color: weatherTheme.textSecondary }}>
+            <span>업데이트: {new Date(data.lastUpdated).toLocaleTimeString('ko-KR')}</span>
           </div>
         </div>
       </div>
