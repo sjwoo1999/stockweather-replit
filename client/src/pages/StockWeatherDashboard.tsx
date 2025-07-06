@@ -260,6 +260,27 @@ export default function StockWeatherDashboard() {
         )}
       </div>
 
+      {/* 시세 정보 안내 배너 */}
+      <Card className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+        <CardContent className="pt-6">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-amber-100 dark:bg-amber-900/40 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200 mb-1">
+                💡 투자 정보 안내
+              </h3>
+              <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
+                현재 종목 카드는 <strong>DART API 기반</strong>의 공시정보와 재무분석을 통한 투자 전망을 제공합니다. 
+                실시간 주가 정보는 향후 KRX API 연동 시 추가될 예정입니다. 
+                현재는 <strong>기업 분석과 투자 전망</strong>에 집중한 정보를 제공하고 있어 안정적이고 신뢰할 수 있는 투자 인사이트를 확인하실 수 있습니다.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stock Weather Cards */}
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
