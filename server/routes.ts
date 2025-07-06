@@ -307,6 +307,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Market Weather API endpoints
+  app.get('/api/market/weather', async (req: any, res) => {
+    try {
+      const { marketWeatherService } = await import('./services/marketWeatherService');
+      const result = await marketWeatherService.generateMarketWeather();
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching market weather:', error);
+      res.status(500).json({ message: 'Failed to fetch market weather data' });
+    }
+  });
+
+  app.get('/api/market/weather/summary', async (req: any, res) => {
+    try {
+      const { marketWeatherService } = await import('./services/marketWeatherService');
+      const result = await marketWeatherService.generateMarketWeather();
+      
+      // 요약 정보만 반환
+      res.json({
+        marketWeather: result.marketWeather,
+        topStocksCount: result.topStocks.length,
+        sectorsCount: result.sectorAnalysis.length,
+        insights: result.marketInsights.slice(0, 2)
+      });
+    } catch (error) {
+      console.error('Error fetching market weather summary:', error);
+      res.status(500).json({ message: 'Failed to fetch market weather summary' });
+    }
+  });
+
+  app.get('/api/market/sectors', async (req: any, res) => {
+    try {
+      const { marketWeatherService } = await import('./services/marketWeatherService');
+      const result = await marketWeatherService.generateMarketWeather();
+      res.json(result.sectorAnalysis);
+    } catch (error) {
+      console.error('Error fetching sector analysis:', error);
+      res.status(500).json({ message: 'Failed to fetch sector analysis' });
+    }
+  });
+
+  // Search with filters
+  app.get('/api/market/stocks/filter', async (req: any, res) => {
+    try {
+      const { market, sector, limit } = req.query;
+      const searchLimit = parseInt(limit as string) || 20;
+      
+      let allStocks = await storage.getAllStocks();
+      
+      // 시장별 필터
+      if (market && typeof market === 'string') {
+        allStocks = allStocks.filter(stock => 
+          stock.market?.toLowerCase() === market.toLowerCase()
+        );
+      }
+      
+      // 섹터별 필터
+      if (sector && typeof sector === 'string') {
+        allStocks = allStocks.filter(stock => 
+          stock.sector?.includes(sector)
+        );
+      }
+      
+      // 시가총액 순 정렬 후 제한
+      const results = allStocks
+        .sort((a, b) => parseFloat(b.marketCap || '0') - parseFloat(a.marketCap || '0'))
+        .slice(0, searchLimit);
+      
+      res.json(results.map(stock => ({
+        code: stock.stockCode,
+        name: stock.stockName,
+        market: stock.market,
+        sector: stock.sector,
+        industry: stock.industry,
+        marketCap: stock.marketCap
+      })));
+    } catch (error) {
+      console.error('Error filtering stocks:', error);
+      res.status(500).json({ message: 'Failed to filter stocks' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
