@@ -46,7 +46,7 @@ export default function AddStockModal({ portfolioId, trigger }: AddStockModalPro
     },
   });
 
-  const { data: searchResults } = useQuery({
+  const { data: searchResults = [] } = useQuery<any[]>({
     queryKey: ["/api/stocks/search", { q: searchQuery }],
     enabled: searchQuery.length > 0,
     retry: false,
@@ -106,22 +106,39 @@ export default function AddStockModal({ portfolioId, trigger }: AddStockModalPro
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="search"
-                placeholder="종목명 또는 코드를 입력하세요"
+                placeholder="종목명, 코드, 업종으로 검색 (예: 삼성, 005930, 반도체, KOSDAQ)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
-            {searchResults && searchResults.length > 0 && (
-              <div className="border border-border rounded-md max-h-40 overflow-y-auto">
+            {searchQuery.length > 0 && searchResults.length === 0 && (
+              <div className="text-sm text-muted-foreground text-center py-2">
+                "{searchQuery}"에 대한 검색 결과가 없습니다.
+              </div>
+            )}
+            {searchResults.length > 0 && (
+              <div className="border border-border rounded-md max-h-48 overflow-y-auto">
                 {searchResults.map((stock: any) => (
                   <div
                     key={stock.code}
-                    className="p-2 hover:bg-muted cursor-pointer"
+                    className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
                     onClick={() => handleStockSelect(stock.code, stock.name)}
                   >
-                    <div className="font-medium">{stock.name}</div>
-                    <div className="text-sm text-muted-foreground">{stock.code}</div>
+                    <div className="font-medium text-foreground">{stock.name}</div>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="font-mono">{stock.code}</span>
+                      <span className="text-xs">•</span>
+                      <span className="text-xs px-1.5 py-0.5 bg-muted rounded">
+                        {stock.market}
+                      </span>
+                      {stock.sector && (
+                        <>
+                          <span className="text-xs">•</span>
+                          <span className="text-xs">{stock.sector}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

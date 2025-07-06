@@ -10,6 +10,7 @@ import {
   decimal,
   boolean,
   uuid,
+  date,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -120,6 +121,22 @@ export const userAlerts = pgTable("user_alerts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Stock master data for search functionality
+export const stockMaster = pgTable("stock_master", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  stockCode: varchar("stock_code", { length: 10 }).notNull().unique(),
+  stockName: varchar("stock_name", { length: 100 }).notNull(),
+  stockNameEng: varchar("stock_name_eng", { length: 100 }),
+  market: varchar("market", { length: 20 }).notNull(), // KOSPI, KOSDAQ, KONEX
+  sector: varchar("sector", { length: 50 }),
+  industry: varchar("industry", { length: 100 }),
+  marketCap: decimal("market_cap", { precision: 15, scale: 0 }),
+  isActive: boolean("is_active").default(true),
+  listedDate: timestamp("listed_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Portfolio performance history
 export const portfolioPerformance = pgTable("portfolio_performance", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -193,6 +210,8 @@ export type InsertPortfolio = z.infer<typeof insertPortfolioSchema>;
 export type StockHolding = typeof stockHoldings.$inferSelect;
 export type InsertStockHolding = z.infer<typeof insertStockHoldingSchema>;
 export type StockPrice = typeof stockPrices.$inferSelect;
+export type StockMaster = typeof stockMaster.$inferSelect;
+export type InsertStockMaster = typeof stockMaster.$inferInsert;
 export type WeatherData = typeof weatherData.$inferSelect;
 export type WeatherCorrelation = typeof weatherCorrelations.$inferSelect;
 export type DartDisclosure = typeof dartDisclosures.$inferSelect;
