@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { parseString } from 'xml2js';
 import { promisify } from 'util';
+import { parseDartDate, logDateParsing, isValidDisclosureDate } from '../utils/dateUtils';
 
 const parseXml = promisify(parseString);
 
@@ -67,19 +68,40 @@ export class DartApiService {
         throw new Error(`DART API error: ${data.message}`);
       }
 
-      // 최신 순으로 정렬
+      // 최신 순으로 정렬 (날짜 파싱 개선)
       const disclosures = data.list
-        .map((item: any) => ({
-          id: item.rcept_no || `${item.corp_name}-${item.rcept_dt}-${Math.random()}`,
-          stockCode: item.stock_code || '',
-          companyName: item.corp_name,
-          title: item.report_nm,
-          type: this.classifyDisclosureType(item.report_nm),
-          submittedDate: new Date(item.rcept_dt),
-          url: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
-          summary: item.rm || '',
-          createdAt: new Date().toISOString()
-        }))
+        .map((item: any) => {
+          const dateParseResult = parseDartDate(item.rcept_dt);
+          
+          // 날짜 파싱 로그 (디버깅용)
+          logDateParsing(item.rcept_dt, dateParseResult);
+          
+          return {
+            id: item.rcept_no || `${item.corp_name}-${item.rcept_dt}-${Math.random()}`,
+            stockCode: item.stock_code || '',
+            companyName: item.corp_name,
+            title: item.report_nm,
+            type: this.classifyDisclosureType(item.report_nm),
+            submittedDate: dateParseResult.date || new Date(), // 파싱 실패시 현재 날짜
+            url: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
+            summary: item.rm || '',
+            createdAt: new Date().toISOString(),
+            // 디버깅 정보 추가
+            _dateParseInfo: {
+              original: item.rcept_dt,
+              isValid: dateParseResult.isValid,
+              errorMessage: dateParseResult.errorMessage
+            }
+          };
+        })
+        .filter((disclosure) => {
+          // 유효하지 않은 날짜의 공시는 제외
+          const isValidDate = isValidDisclosureDate(disclosure.submittedDate);
+          if (!isValidDate) {
+            console.warn(`[공시 필터링] 유효하지 않은 날짜로 제외: ${disclosure.companyName} - ${disclosure.title}`);
+          }
+          return isValidDate;
+        })
         .sort((a, b) => b.submittedDate.getTime() - a.submittedDate.getTime());
 
       console.log(`✅ DART API: ${disclosures.length}개의 최신 공시 조회 완료`);
@@ -142,17 +164,28 @@ export class DartApiService {
         throw new Error(`DART API error: ${data.message}`);
       }
 
-      return data.list.map((item: any) => ({
-        id: item.rcept_no || `${stockCode}-${item.rcept_dt}-${Math.random()}`,
-        stockCode: stockCode,
-        companyName: item.corp_name,
-        title: item.report_nm,
-        type: this.classifyDisclosureType(item.report_nm),
-        submittedDate: new Date(item.rcept_dt),
-        url: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
-        summary: item.rm || '',
-        createdAt: new Date().toISOString()
-      }));
+      return data.list
+        .map((item: any) => {
+          const dateParseResult = parseDartDate(item.rcept_dt);
+          
+          return {
+            id: item.rcept_no || `${stockCode}-${item.rcept_dt}-${Math.random()}`,
+            stockCode: stockCode,
+            companyName: item.corp_name,
+            title: item.report_nm,
+            type: this.classifyDisclosureType(item.report_nm),
+            submittedDate: dateParseResult.date || new Date(),
+            url: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
+            summary: item.rm || '',
+            createdAt: new Date().toISOString(),
+            _dateParseInfo: {
+              original: item.rcept_dt,
+              isValid: dateParseResult.isValid,
+              errorMessage: dateParseResult.errorMessage
+            }
+          };
+        })
+        .filter((disclosure: any) => isValidDisclosureDate(disclosure.submittedDate));
     } catch (error) {
       console.error(`Failed to fetch DART disclosures for ${stockCode}:`, error);
       return [];

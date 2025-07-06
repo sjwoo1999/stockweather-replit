@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DartDisclosure } from "@/types";
+import { formatDate, formatRelativeTime, isValidDate, isRecentDate } from "@/utils/dateUtils";
 
 export default function DartDisclosures() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,16 +65,32 @@ export default function DartDisclosures() {
     });
   };
 
-  const getTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const disclosureDate = new Date(dateString);
-    const diffInDays = Math.floor((now.getTime() - disclosureDate.getTime()) / (1000 * 60 * 60 * 24));
+  const getTimeAgo = (dateValue: any) => {
+    if (!isValidDate(dateValue)) {
+      return { 
+        text: '날짜 정보 없음', 
+        isRecent: false, 
+        color: 'text-muted-foreground' 
+      };
+    }
+
+    const relativeTime = formatRelativeTime(dateValue);
+    const isRecent = isRecentDate(dateValue);
     
-    if (diffInDays === 0) return { text: '오늘', isRecent: true, color: 'text-green-600' };
-    if (diffInDays === 1) return { text: '어제', isRecent: true, color: 'text-green-600' };
-    if (diffInDays < 7) return { text: `${diffInDays}일 전`, isRecent: true, color: 'text-blue-600' };
-    if (diffInDays < 30) return { text: `${Math.floor(diffInDays / 7)}주 전`, isRecent: false, color: 'text-yellow-600' };
-    return { text: `${Math.floor(diffInDays / 30)}개월 전`, isRecent: false, color: 'text-red-600' };
+    // 상대 시간에 따른 색상 결정
+    if (relativeTime === '오늘' || relativeTime === '어제') {
+      return { text: relativeTime, isRecent: true, color: 'text-green-600' };
+    }
+    
+    if (relativeTime.includes('일 전') && isRecent) {
+      return { text: relativeTime, isRecent: true, color: 'text-blue-600' };
+    }
+    
+    if (relativeTime.includes('주 전')) {
+      return { text: relativeTime, isRecent: false, color: 'text-yellow-600' };
+    }
+    
+    return { text: relativeTime, isRecent: false, color: 'text-red-600' };
   };
 
   const filteredDisclosures = Array.isArray(recentDisclosures) ? recentDisclosures.filter((disclosure: DartDisclosure) => {

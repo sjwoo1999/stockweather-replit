@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { DartDisclosure } from "@/types";
+import { formatDate, isValidDate } from "@/utils/dateUtils";
 
 interface DartPanelProps {
   disclosures: DartDisclosure[];
@@ -29,14 +30,7 @@ export default function DartPanel({ disclosures, className }: DartPanelProps) {
     return nameMap[type] || type;
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-    });
-  };
+  // formatDate 함수는 이제 utils에서 import하므로 제거
 
   return (
     <Card className={className}>
