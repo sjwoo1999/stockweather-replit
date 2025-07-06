@@ -4,8 +4,10 @@ import { LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { 
   NAVIGATION_ITEMS, 
+  MENU_GROUPS,
   getNavigationIcon
 } from "@/constants/navigation";
+import { Separator } from "@/components/ui/separator";
 
 export default function Sidebar() {
   const [currentPath, setLocation] = useLocation();
@@ -55,39 +57,61 @@ export default function Sidebar() {
     >
       <div className="flex flex-col w-64 bg-card border-r border-border">
         <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-          <div className="px-4 space-y-1">
-            {NAVIGATION_ITEMS.map((item) => {
-              const Icon = getNavigationIcon(item.icon);
-              const active = isActive(item.href);
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log(`[Sidebar] Button clicked for: ${item.href}`);
-                    handleNavigation(item.href);
-                  }}
-                  className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 w-full text-left cursor-pointer",
-                    active 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                  aria-current={active ? "page" : undefined}
-                  aria-label={item.ariaLabel}
-                  title={item.description}
-                  type="button"
-                >
-                  <Icon 
-                    className="w-5 h-5 mr-3" 
-                    aria-hidden="true"
-                  />
-                  <span>{item.name}</span>
-                </button>
-              );
-            })}
+          <div className="px-4 space-y-6">
+            {MENU_GROUPS.map((group, groupIndex) => (
+              <div key={group.id} className="space-y-2">
+                {/* 그룹 헤더 */}
+                <div className="px-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {group.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {group.description}
+                  </p>
+                </div>
+                
+                {/* 그룹 메뉴 아이템들 */}
+                <div className="space-y-1">
+                  {group.items.map((item) => {
+                    const Icon = getNavigationIcon(item.icon);
+                    const active = isActive(item.href);
+                    
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log(`[Sidebar] Button clicked for: ${item.href}`);
+                          handleNavigation(item.href);
+                        }}
+                        className={cn(
+                          "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 w-full text-left cursor-pointer",
+                          active 
+                            ? "bg-primary text-primary-foreground shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        )}
+                        aria-current={active ? "page" : undefined}
+                        aria-label={item.ariaLabel}
+                        title={item.description}
+                        type="button"
+                      >
+                        <Icon 
+                          className="w-5 h-5 mr-3" 
+                          aria-hidden="true"
+                        />
+                        <span>{item.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                {/* 그룹 간 구분선 (마지막 그룹 제외) */}
+                {groupIndex < MENU_GROUPS.length - 1 && (
+                  <Separator className="my-3" />
+                )}
+              </div>
+            ))}
           </div>
         </div>
         

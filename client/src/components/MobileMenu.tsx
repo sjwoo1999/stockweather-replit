@@ -4,8 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { 
   NAVIGATION_ITEMS, 
+  MENU_GROUPS,
   getNavigationIcon
 } from "@/constants/navigation";
+import { Separator } from "@/components/ui/separator";
 import { LogOut, X } from "lucide-react";
 import type { User } from "@shared/schema";
 
@@ -85,37 +87,59 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         
         {/* 네비게이션 메뉴 */}
         <nav 
-          className="flex-1 px-2 py-4 space-y-2"
+          className="flex-1 px-2 py-4 space-y-4"
           role="navigation"
           aria-label="모바일 네비게이션"
         >
-          {NAVIGATION_ITEMS.map((item) => {
-            const Icon = getNavigationIcon(item.icon);
-            const active = isActive(item.href);
-            
-            return (
-              <button
-                key={item.id} 
-                onClick={() => handleNavigation(item.href)}
-                className={cn(
-                  "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary w-full text-left",
-                  active 
-                    ? "text-primary bg-primary/10 border-r-4 border-primary shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-                aria-current={active ? "page" : undefined}
-                aria-label={item.ariaLabel}
-                title={item.description}
-                type="button"
-              >
-                <Icon 
-                  className="w-5 h-5 mr-3" 
-                  aria-hidden="true"
-                />
-                <span>{item.name}</span>
-              </button>
-            );
-          })}
+          {MENU_GROUPS.map((group, groupIndex) => (
+            <div key={group.id} className="space-y-2">
+              {/* 그룹 헤더 */}
+              <div className="px-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {group.name}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {group.description}
+                </p>
+              </div>
+              
+              {/* 그룹 메뉴 아이템들 */}
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const Icon = getNavigationIcon(item.icon);
+                  const active = isActive(item.href);
+                  
+                  return (
+                    <button
+                      key={item.id} 
+                      onClick={() => handleNavigation(item.href)}
+                      className={cn(
+                        "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary w-full text-left",
+                        active 
+                          ? "text-primary bg-primary/10 border-r-4 border-primary shadow-sm" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      )}
+                      aria-current={active ? "page" : undefined}
+                      aria-label={item.ariaLabel}
+                      title={item.description}
+                      type="button"
+                    >
+                      <Icon 
+                        className="w-5 h-5 mr-3" 
+                        aria-hidden="true"
+                      />
+                      <span>{item.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {/* 그룹 간 구분선 (마지막 그룹 제외) */}
+              {groupIndex < MENU_GROUPS.length - 1 && (
+                <Separator className="my-3" />
+              )}
+            </div>
+          ))}
         </nav>
         
         {/* 사용자 정보 및 로그아웃 */}
