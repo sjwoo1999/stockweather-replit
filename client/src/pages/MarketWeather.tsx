@@ -105,7 +105,12 @@ export default function MarketWeather() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">시장 날씨</h1>
-        <p className="text-muted-foreground">전체 시장 동향과 주요 종목의 투자 전망을 확인하세요</p>
+        <p className="text-muted-foreground">전체 시장 동향과 주요 종목의 투자 전망을 날씨로 직관적으로 확인하세요</p>
+        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            💡 <strong>시장 날씨</strong>는 95개 주요 종목의 DART 공시 데이터를 기반으로 AI가 분석한 투자 전망을 제공합니다.
+          </p>
+        </div>
       </div>
 
       {/* Market Weather Overview */}

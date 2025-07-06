@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
-import Dashboard from "@/pages/Dashboard";
 import Portfolio from "@/pages/Portfolio";
 import StockAnalysis from "@/pages/StockAnalysis";
 import MarketWeather from "@/pages/MarketWeather";
@@ -32,10 +31,9 @@ function Router() {
         <Route path="/" component={Landing} />
       ) : (
         <Layout>
-          <Route path="/" component={Dashboard} />
+          <Route path="/" component={MarketWeather} />
           <Route path="/portfolio" component={Portfolio} />
           <Route path="/analysis" component={StockAnalysis} />
-          <Route path="/weather" component={MarketWeather} />
           <Route path="/dart" component={DartDisclosures} />
           <Route path="/settings" component={Settings} />
         </Layout>
