@@ -23,9 +23,11 @@ export default function DartDisclosures() {
   const [selectedType, setSelectedType] = useState("all");
   const [selectedStock, setSelectedStock] = useState("");
 
-  const { data: recentDisclosures, isLoading } = useQuery<DartDisclosure[]>({
+  const { data: recentDisclosuresResponse, isLoading } = useQuery<{ data: DartDisclosure[], metadata: any }>({
     queryKey: ["/api/dart/recent", { limit: 50 }],
   });
+
+  const recentDisclosures = recentDisclosuresResponse?.data || [];
 
   const { data: stockDisclosures } = useQuery<DartDisclosure[]>({
     queryKey: [`/api/dart/stock/${selectedStock}`, { limit: 20 }],
@@ -67,11 +69,11 @@ export default function DartDisclosures() {
     const disclosureDate = new Date(dateString);
     const diffInDays = Math.floor((now.getTime() - disclosureDate.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (diffInDays === 0) return '오늘';
-    if (diffInDays === 1) return '어제';
-    if (diffInDays < 7) return `${diffInDays}일 전`;
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}주 전`;
-    return `${Math.floor(diffInDays / 30)}개월 전`;
+    if (diffInDays === 0) return { text: '오늘', isRecent: true, color: 'text-green-600' };
+    if (diffInDays === 1) return { text: '어제', isRecent: true, color: 'text-green-600' };
+    if (diffInDays < 7) return { text: `${diffInDays}일 전`, isRecent: true, color: 'text-blue-600' };
+    if (diffInDays < 30) return { text: `${Math.floor(diffInDays / 7)}주 전`, isRecent: false, color: 'text-yellow-600' };
+    return { text: `${Math.floor(diffInDays / 30)}개월 전`, isRecent: false, color: 'text-red-600' };
   };
 
   const filteredDisclosures = Array.isArray(recentDisclosures) ? recentDisclosures.filter((disclosure: DartDisclosure) => {
@@ -98,7 +100,18 @@ export default function DartDisclosures() {
       {/* Page Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-foreground mb-2">DART 공시정보</h2>
-        <p className="text-muted-foreground">금융감독원 전자공시시스템의 최신 공시정보를 확인하세요</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-muted-foreground">
+            금융감독원 전자공시시스템의 공시정보를 확인하세요
+          </p>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <span>실시간 업데이트</span>
+            <span className="text-xs">
+              (최근 30일 기준)
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -195,11 +208,29 @@ export default function DartDisclosures() {
             <TabsContent value="recent">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>최신 공시 목록</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {filteredDisclosures.length}개 결과
-                    </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        최신 공시 목록
+                        <Badge variant="secondary" className="text-xs">
+                          최근 30일
+                        </Badge>
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {recentDisclosuresResponse?.metadata?.dataRangeDescription || "최신 공시정보"} 
+                        (수집: {recentDisclosuresResponse?.metadata?.fetchedAt ? new Date(recentDisclosuresResponse.metadata.fetchedAt).toLocaleDateString('ko-KR') : new Date().toLocaleDateString('ko-KR')})
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {filteredDisclosures.length}개 결과
+                      </p>
+                      {filteredDisclosures.length === 0 && !isLoading && (
+                        <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                          데이터 준비 중
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -213,10 +244,15 @@ export default function DartDisclosures() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {filteredDisclosures.map((disclosure: DartDisclosure, index: number) => (
+                      {filteredDisclosures.map((disclosure: DartDisclosure, index: number) => {
+                        const timeInfo = getTimeAgo(disclosure.submittedDate);
+                        return (
                         <div 
                           key={disclosure.id || `disclosure-${index}-${disclosure.stockCode}-${disclosure.submittedDate}`} 
-                          className="p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                          className={cn(
+                            "p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors",
+                            timeInfo.isRecent && "ring-1 ring-green-200 dark:ring-green-800"
+                          )}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -230,9 +266,14 @@ export default function DartDisclosures() {
                                 <Badge variant="secondary" className="text-xs">
                                   {disclosure.stockCode}
                                 </Badge>
-                                <span className="text-sm text-muted-foreground">
-                                  {getTimeAgo(disclosure.submittedDate)}
-                                </span>
+                                <div className="flex items-center gap-1">
+                                  {timeInfo.isRecent && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                  )}
+                                  <span className={cn("text-sm font-medium", timeInfo.color)}>
+                                    {timeInfo.text}
+                                  </span>
+                                </div>
                               </div>
                               
                               <h3 className="font-medium text-foreground mb-1 line-clamp-2">
@@ -271,7 +312,8 @@ export default function DartDisclosures() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
