@@ -110,19 +110,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stock routes (public access)
+  // Stock routes (public access) - 실제 데이터베이스 검색
   app.get('/api/stocks/search', async (req: any, res) => {
     try {
       const query = req.query.q as string;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      
       if (!query) {
         return res.status(400).json({ message: "Query parameter is required" });
       }
       
-      const results = await stockApi.searchStocks(query);
-      res.json(results);
+      // 데이터베이스에서 검색 (한국어, 영어, 종목코드, 업종 등 지원)
+      const results = await storage.searchStocks(query, limit);
+      
+      // 기존 API 형식에 맞게 변환
+      const searchResults = results.map(stock => ({
+        code: stock.stockCode,
+        name: stock.stockName,
+        market: stock.market,
+        sector: stock.sector,
+        industry: stock.industry,
+        marketCap: stock.marketCap
+      }));
+      
+      res.json(searchResults);
     } catch (error) {
       console.error("Error searching stocks:", error);
       res.status(500).json({ message: "Failed to search stocks" });
+    }
+  });
+
+  // 전체 종목 목록 (시가총액 순)
+  app.get('/api/stocks/all', async (req: any, res) => {
+    try {
+      const allStocks = await storage.getAllStocks();
+      const stockList = allStocks.map(stock => ({
+        code: stock.stockCode,
+        name: stock.stockName,
+        market: stock.market,
+        sector: stock.sector,
+        industry: stock.industry,
+        marketCap: stock.marketCap
+      }));
+      
+      res.json(stockList);
+    } catch (error) {
+      console.error("Error fetching all stocks:", error);
+      res.status(500).json({ message: "Failed to fetch all stocks" });
     }
   });
 

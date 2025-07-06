@@ -3,6 +3,7 @@ import {
   portfolios,
   stockHoldings,
   stockPrices,
+  stockMaster,
   weatherData,
   weatherCorrelations,
   dartDisclosures,
@@ -15,6 +16,8 @@ import {
   type StockHolding,
   type InsertStockHolding,
   type StockPrice,
+  type StockMaster,
+  type InsertStockMaster,
   type WeatherData,
   type WeatherCorrelation,
   type DartDisclosure,
@@ -23,7 +26,7 @@ import {
   type PortfolioPerformance,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, or, ilike, asc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -67,6 +70,11 @@ export interface IStorage {
   // Portfolio performance
   savePortfolioPerformance(performance: Omit<PortfolioPerformance, 'id'>): Promise<PortfolioPerformance>;
   getPortfolioPerformanceHistory(portfolioId: string, days: number): Promise<PortfolioPerformance[]>;
+
+  // Stock search operations
+  searchStocks(query: string, limit?: number): Promise<StockMaster[]>;
+  getAllStocks(): Promise<StockMaster[]>;
+  upsertStockMaster(stock: InsertStockMaster): Promise<StockMaster>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -295,6 +303,112 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(portfolioPerformance.timestamp));
+  }
+
+  // Stock search operations
+  async searchStocks(query: string, limit: number = 20): Promise<StockMaster[]> {
+    if (!query.trim()) return [];
+    
+    const searchTerm = query.trim();
+    console.log('Searching for:', searchTerm);
+    
+    try {
+      // 간단한 방식으로 먼저 시도 - 모든 주식을 가져와서 JavaScript에서 필터링
+      const allStocks = await db.select().from(stockMaster).where(eq(stockMaster.isActive, true));
+      
+      const filtered = allStocks.filter(stock => {
+        const term = searchTerm.toLowerCase();
+        return (
+          stock.stockName?.includes(searchTerm) || // 한글 정확 매칭
+          stock.stockName?.toLowerCase().includes(term) || // 영어 case-insensitive
+          stock.stockNameEng?.toLowerCase().includes(term) ||
+          stock.stockCode?.toLowerCase().includes(term) ||
+          stock.market?.toLowerCase().includes(term) || // 마켓 검색 (KOSPI, KOSDAQ)
+          stock.sector?.includes(searchTerm) || // 한글 업종 검색
+          stock.sector?.toLowerCase().includes(term) ||
+          stock.industry?.includes(searchTerm) || // 한글 산업 검색
+          stock.industry?.toLowerCase().includes(term) ||
+          // 초성 검색 지원 (간단한 패턴)
+          (searchTerm.length <= 3 && this.matchesInitials(stock.stockName || '', searchTerm))
+        );
+      });
+      
+      // 관련성에 따라 정렬
+      const sorted = filtered.sort((a, b) => {
+        // 종목코드 정확 일치가 최우선
+        if (a.stockCode === searchTerm) return -1;
+        if (b.stockCode === searchTerm) return 1;
+        
+        // 종목명 정확 일치가 두 번째
+        if (a.stockName === searchTerm) return -1;
+        if (b.stockName === searchTerm) return 1;
+        
+        // 종목코드로 시작하는 것이 세 번째
+        if (a.stockCode?.startsWith(searchTerm)) return -1;
+        if (b.stockCode?.startsWith(searchTerm)) return 1;
+        
+        // 종목명으로 시작하는 것이 네 번째
+        if (a.stockName?.startsWith(searchTerm)) return -1;
+        if (b.stockName?.startsWith(searchTerm)) return 1;
+        
+        // 시가총액 순으로 정렬
+        const aMarketCap = parseFloat(a.marketCap || '0');
+        const bMarketCap = parseFloat(b.marketCap || '0');
+        return bMarketCap - aMarketCap;
+      });
+      
+      console.log(`Found ${sorted.length} results for "${searchTerm}"`);
+      return sorted.slice(0, limit);
+      
+    } catch (error) {
+      console.error('Database search error:', error);
+      return [];
+    }
+  }
+
+  // 한글 초성 검색을 위한 도우미 함수
+  private matchesInitials(text: string, initials: string): boolean {
+    const initialMap: Record<string, string> = {
+      'ㄱ': '[가-깋]', 'ㄴ': '[나-닣]', 'ㄷ': '[다-딯]', 'ㄹ': '[라-맇]',
+      'ㅁ': '[마-밓]', 'ㅂ': '[바-빟]', 'ㅅ': '[사-싷]', 'ㅇ': '[아-잏]',
+      'ㅈ': '[자-짛]', 'ㅊ': '[차-칳]', 'ㅋ': '[카-킿]', 'ㅌ': '[타-팋]',
+      'ㅍ': '[파-핗]', 'ㅎ': '[하-힣]'
+    };
+
+    try {
+      const pattern = initials.split('').map(char => initialMap[char] || char).join('');
+      const regex = new RegExp(pattern);
+      return regex.test(text);
+    } catch {
+      return false;
+    }
+  }
+
+  async getAllStocks(): Promise<StockMaster[]> {
+    return await db.select()
+      .from(stockMaster)
+      .where(sql`${stockMaster.isActive} = true`)
+      .orderBy(sql`${stockMaster.marketCap} DESC NULLS LAST`);
+  }
+
+  async upsertStockMaster(stock: InsertStockMaster): Promise<StockMaster> {
+    const [result] = await db.insert(stockMaster)
+      .values(stock)
+      .onConflictDoUpdate({
+        target: stockMaster.stockCode,
+        set: {
+          stockName: stock.stockName,
+          stockNameEng: stock.stockNameEng,
+          market: stock.market,
+          sector: stock.sector,
+          industry: stock.industry,
+          marketCap: stock.marketCap,
+          isActive: stock.isActive,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
   }
 }
 
