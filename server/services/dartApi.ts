@@ -38,10 +38,20 @@ export class DartApiService {
 
   async getRecentDisclosures(limit: number = 10): Promise<DartDisclosureInfo[]> {
     try {
+      // 오늘 날짜 기준으로 최신 공시 요청
+      const today = new Date();
+      const endDate = today.toISOString().split('T')[0].replace(/-/g, '');
+      
+      // 지난 30일간의 공시 조회
+      const startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString().split('T')[0].replace(/-/g, '');
+
       const response = await axios.get(`${this.baseUrl}/list.json`, {
         params: {
           crtfc_key: this.apiKey,
           corp_cls: 'Y', // 유가증권시장
+          bgn_de: startDate,
+          end_de: endDate,
           page_no: 1,
           page_count: limit,
         },
@@ -57,17 +67,23 @@ export class DartApiService {
         throw new Error(`DART API error: ${data.message}`);
       }
 
-      return data.list.map((item: any) => ({
-        id: item.rcept_no || `${item.corp_name}-${item.rcept_dt}-${Math.random()}`,
-        stockCode: item.stock_code || '',
-        companyName: item.corp_name,
-        title: item.report_nm,
-        type: this.classifyDisclosureType(item.report_nm),
-        submittedDate: new Date(item.rcept_dt),
-        url: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
-        summary: item.rm || '',
-        createdAt: new Date().toISOString()
-      }));
+      // 최신 순으로 정렬
+      const disclosures = data.list
+        .map((item: any) => ({
+          id: item.rcept_no || `${item.corp_name}-${item.rcept_dt}-${Math.random()}`,
+          stockCode: item.stock_code || '',
+          companyName: item.corp_name,
+          title: item.report_nm,
+          type: this.classifyDisclosureType(item.report_nm),
+          submittedDate: new Date(item.rcept_dt),
+          url: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
+          summary: item.rm || '',
+          createdAt: new Date().toISOString()
+        }))
+        .sort((a, b) => b.submittedDate.getTime() - a.submittedDate.getTime());
+
+      console.log(`✅ DART API: ${disclosures.length}개의 최신 공시 조회 완료`);
+      return disclosures;
     } catch (error) {
       console.error('Failed to fetch DART disclosures:', error);
       return this.getFallbackDisclosures(limit);
@@ -170,43 +186,74 @@ export class DartApiService {
   }
 
   private getFallbackDisclosures(limit: number): DartDisclosureInfo[] {
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000);
+    const threeDaysAgo = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000);
+    const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
     const fallbackData: DartDisclosureInfo[] = [
       {
-        id: 'fallback-005930-20240115',
+        id: `fallback-005930-${yesterday.getFullYear()}${String(yesterday.getMonth() + 1).padStart(2, '0')}${String(yesterday.getDate()).padStart(2, '0')}`,
         stockCode: '005930',
         companyName: '삼성전자',
-        title: '분기보고서',
+        title: '분기보고서 (2024.Q4)',
         type: 'quarterly',
-        submittedDate: new Date('2024-01-15'),
+        submittedDate: yesterday,
         url: 'https://dart.fss.or.kr',
-        summary: '2023년 4분기 실적 발표',
+        summary: '2024년 4분기 실적 발표',
         createdAt: new Date().toISOString()
       },
       {
-        id: 'fallback-005380-20240114',
+        id: `fallback-005380-${twoDaysAgo.getFullYear()}${String(twoDaysAgo.getMonth() + 1).padStart(2, '0')}${String(twoDaysAgo.getDate()).padStart(2, '0')}`,
         stockCode: '005380',
         companyName: '현대차',
         title: '주요사항보고서',
         type: 'material',
-        submittedDate: new Date('2024-01-14'),
+        submittedDate: twoDaysAgo,
         url: 'https://dart.fss.or.kr',
         summary: '신규 투자 계획 발표',
         createdAt: new Date().toISOString()
       },
       {
-        id: 'fallback-373220-20240113',
+        id: `fallback-373220-${threeDaysAgo.getFullYear()}${String(threeDaysAgo.getMonth() + 1).padStart(2, '0')}${String(threeDaysAgo.getDate()).padStart(2, '0')}`,
         stockCode: '373220',
         companyName: 'LG에너지솔루션',
         title: '공정공시',
         type: 'fair_disclosure',
-        submittedDate: new Date('2024-01-13'),
+        submittedDate: threeDaysAgo,
         url: 'https://dart.fss.or.kr',
         summary: '배터리 생산 확대 계획',
         createdAt: new Date().toISOString()
       },
+      {
+        id: `fallback-000660-${oneWeekAgo.getFullYear()}${String(oneWeekAgo.getMonth() + 1).padStart(2, '0')}${String(oneWeekAgo.getDate()).padStart(2, '0')}`,
+        stockCode: '000660',
+        companyName: 'SK하이닉스',
+        title: '분기보고서 (2024.Q4)',
+        type: 'quarterly',
+        submittedDate: oneWeekAgo,
+        url: 'https://dart.fss.or.kr',
+        summary: '메모리 반도체 실적 발표',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: `fallback-035720-${new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000).getFullYear()}${String(new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000).getMonth() + 1).padStart(2, '0')}${String(new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000).getDate()).padStart(2, '0')}`,
+        stockCode: '035720',
+        companyName: '카카오',
+        title: '공정공시',
+        type: 'fair_disclosure',
+        submittedDate: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000),
+        url: 'https://dart.fss.or.kr',
+        summary: '플랫폼 사업 확장 계획',
+        createdAt: new Date().toISOString()
+      },
     ];
 
-    return fallbackData.slice(0, limit);
+    // 최신 순으로 정렬하고 제한 수만큼 반환
+    return fallbackData
+      .sort((a, b) => b.submittedDate.getTime() - a.submittedDate.getTime())
+      .slice(0, limit);
   }
 }
 

@@ -214,7 +214,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const disclosures = await dartApi.getRecentDisclosures(limit);
-      res.json(disclosures);
+      
+      // 최신성 메타데이터 추가
+      const response = {
+        data: disclosures,
+        metadata: {
+          count: disclosures.length,
+          fetchedAt: new Date().toISOString(),
+          dataRangeDescription: "최근 30일간의 공시정보",
+          lastUpdated: new Date().toISOString(),
+          source: "DART 금융감독원 전자공시시스템"
+        }
+      };
+      
+      res.json(response);
     } catch (error) {
       console.error("Error fetching DART disclosures:", error);
       res.status(500).json({ message: "Failed to fetch DART disclosures" });
