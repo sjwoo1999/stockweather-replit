@@ -45,9 +45,19 @@ export interface MenuGroup {
   items: NavigationItem[];
 }
 
-// 네비게이션 메뉴 데이터 (데이터 흐름 기반 재구성)
+// 네비게이션 메뉴 데이터 (사용자 흐름 최적화)
 export const NAVIGATION_ITEMS: NavigationItem[] = [
-  // 1️⃣ 분석 정보 (데이터 수집 → 분석)
+  // 1️⃣ 메인 대시보드 (초기 진입점)
+  {
+    id: "market-weather",
+    name: "시장 날씨",
+    href: "/",
+    icon: "BarChart3",
+    description: "전체 시장 동향과 날씨 상관관계 분석",
+    ariaLabel: "시장 날씨 분석 페이지로 이동"
+  },
+  
+  // 2️⃣ 분석 정보 (데이터 수집 → 분석)
   {
     id: "dart",
     name: "기업 공시",
@@ -63,24 +73,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: "ChartBar",
     description: "개별 종목 차트 및 기술적 분석",
     ariaLabel: "종목 분석 페이지로 이동"
-  },
-  
-  // 2️⃣ 날씨 예보 (분석 → 예측)
-  {
-    id: "dashboard",
-    name: "종목별 날씨",
-    href: "/",
-    icon: "Cloud",
-    description: "개별 종목을 날씨로 표현한 직관적 예보",
-    ariaLabel: "종목별 날씨 예보 대시보드로 이동"
-  },
-  {
-    id: "weather",
-    name: "시장 날씨",
-    href: "/weather",
-    icon: "BarChart3",
-    description: "전체 시장 동향과 날씨 상관관계 분석",
-    ariaLabel: "시장 날씨 분석 페이지로 이동"
   },
   
   // 3️⃣ 개인화 (예측 → 투자 관리)
@@ -105,22 +97,22 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
 // 메뉴 그룹화 (UI 표시용)
 export const MENU_GROUPS: MenuGroup[] = [
   {
+    id: "main",
+    name: "🌤️ 메인 대시보드",
+    description: "시장 전체 날씨 현황",
+    items: NAVIGATION_ITEMS.slice(0, 1) // 시장 날씨
+  },
+  {
     id: "analysis",
     name: "📊 정보 분석",
     description: "기업 공시부터 종목 분석까지",
-    items: NAVIGATION_ITEMS.slice(0, 2) // 기업 공시, 종목 분석
-  },
-  {
-    id: "forecast", 
-    name: "🌤️ 날씨 예보",
-    description: "종목별·시장별 날씨 예보",
-    items: NAVIGATION_ITEMS.slice(2, 4) // 종목별 날씨, 시장 날씨
+    items: NAVIGATION_ITEMS.slice(1, 3) // 기업 공시, 종목 분석
   },
   {
     id: "personal",
     name: "👤 개인 관리", 
     description: "포트폴리오 및 설정",
-    items: NAVIGATION_ITEMS.slice(4, 6) // 내 포트폴리오, 설정
+    items: NAVIGATION_ITEMS.slice(3, 5) // 내 포트폴리오, 설정
   }
 ] as const;
 
