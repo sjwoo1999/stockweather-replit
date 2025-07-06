@@ -76,22 +76,45 @@ export class DartApiService {
           // 날짜 파싱 로그 (디버깅용)
           logDateParsing(item.rcept_dt, dateParseResult);
           
+          // DART API 응답 구조 디버깅 (첫 번째 아이템만)
+          if (data.list.indexOf(item) === 0) {
+            console.log('🔍 DART API 응답 샘플:', {
+              corp_name: item.corp_name,
+              corp_cls: item.corp_cls,
+              stock_code: item.stock_code,
+              report_nm: item.report_nm,
+              rcept_dt: item.rcept_dt,
+              rm: item.rm,
+              flr_nm: item.flr_nm,
+              rep_nm: item.rep_nm
+            });
+          }
+          
           return {
             id: item.rcept_no || `${item.corp_name}-${item.rcept_dt}-${Math.random()}`,
             stockCode: item.stock_code || '',
-            companyName: item.corp_name,
-            title: item.report_nm,
-            type: this.classifyDisclosureType(item.report_nm),
+            companyName: item.corp_name || '',
+            title: item.report_nm || '',
+            type: this.classifyDisclosureType(item.report_nm || ''),
             submittedDate: dateParseResult.date || new Date(), // 파싱 실패시 현재 날짜
             url: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
-            summary: item.rm || '',
+            summary: this.processSummaryField(item.rm || ''),
             createdAt: new Date().toISOString(),
             // 디버깅 정보 추가
             _dateParseInfo: {
               original: item.rcept_dt,
               isValid: dateParseResult.isValid,
               errorMessage: dateParseResult.errorMessage
-            }
+            },
+            // DART 원본 데이터 디버깅용 (개발 환경에서만)
+            ...(process.env.NODE_ENV === 'development' && {
+              _rawData: {
+                corp_cls: item.corp_cls,
+                flr_nm: item.flr_nm,
+                rep_nm: item.rep_nm,
+                rm: item.rm
+              }
+            })
           };
         })
         .filter((disclosure) => {
@@ -216,6 +239,39 @@ export class DartApiService {
     if (reportName.includes('주요사항보고서')) return 'material';
     if (reportName.includes('공정공시')) return 'fair_disclosure';
     return 'other';
+  }
+
+  /**
+   * DART API의 rm 필드(비고) 처리
+   * "유", "코" 등의 시장 코드를 의미있는 텍스트로 변환하거나 제거
+   */
+  private processSummaryField(summary: string): string {
+    if (!summary || summary.trim() === '') {
+      return '';
+    }
+    
+    const trimmed = summary.trim();
+    
+    // 단순 시장 코드들은 제거
+    if (trimmed === '유' || trimmed === '코' || trimmed === '코넥스' || trimmed === 'Y' || trimmed === 'K') {
+      return '';
+    }
+    
+    // 시장 코드가 포함된 경우 변환
+    if (trimmed === '유가증권시장' || trimmed.includes('유가증권')) {
+      return '';
+    }
+    
+    if (trimmed === '코스닥시장' || trimmed.includes('코스닥')) {
+      return '';
+    }
+    
+    // 유의미한 요약 내용인 경우 그대로 반환
+    if (trimmed.length > 2 && !['유', '코', '코넥스', 'Y', 'K'].includes(trimmed)) {
+      return trimmed;
+    }
+    
+    return '';
   }
 
   private getFallbackDisclosures(limit: number): DartDisclosureInfo[] {
