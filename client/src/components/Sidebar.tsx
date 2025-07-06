@@ -13,15 +13,25 @@ export default function Sidebar() {
 
   // 경로 변경 시 활성 아이템 동기화
   useEffect(() => {
+    console.log(`[Sidebar] Path changed: ${currentPath}`);
     setActiveNavItem(currentPath);
   }, [currentPath]);
 
   const handleNavigation = (href: string) => {
-    // 즉시 UI 상태 업데이트 (낙관적 업데이트)
-    setActiveNavItem(href);
+    console.log(`[Sidebar] Navigation clicked: ${href}`);
+    console.log(`[Sidebar] Current path: ${currentPath}`);
     
-    // 네비게이션 실행
-    setLocation(href);
+    try {
+      // 즉시 UI 상태 업데이트
+      setActiveNavItem(href);
+      
+      // 네비게이션 실행
+      setLocation(href);
+      
+      console.log(`[Sidebar] Navigation completed to: ${href}`);
+    } catch (error) {
+      console.error(`[Sidebar] Navigation error:`, error);
+    }
   };
 
   // 간단한 경로 매칭 함수
@@ -38,9 +48,10 @@ export default function Sidebar() {
 
   return (
     <nav 
-      className="hidden md:flex md:flex-shrink-0"
+      className="hidden md:flex md:flex-shrink-0 relative z-10"
       role="navigation"
       aria-label="주요 네비게이션"
+      style={{ pointerEvents: 'auto' }}
     >
       <div className="flex flex-col w-64 bg-card border-r border-border">
         <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
@@ -52,9 +63,14 @@ export default function Sidebar() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => handleNavigation(item.href)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(`[Sidebar] Button clicked for: ${item.href}`);
+                    handleNavigation(item.href);
+                  }}
                   className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 w-full text-left",
+                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 w-full text-left cursor-pointer",
                     active 
                       ? "bg-primary text-primary-foreground shadow-sm" 
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
