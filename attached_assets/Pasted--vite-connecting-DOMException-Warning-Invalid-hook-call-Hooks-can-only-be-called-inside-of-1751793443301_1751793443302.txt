@@ -1,0 +1,32 @@
+[vite] connecting...
+DOMException {}
+
+Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+Cannot read properties of null (reading 'useEffect')
+Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+Cannot read properties of null (reading 'useEffect')
+at Object.useEffect (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QCHXOAYK.js?v=a33b9a4c:1078:29)
+at QueryClientProvider (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a33b9a4c:2808:9)
+at renderWithHooks (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=298a5b96:11548:26)
+at mountIndeterminateComponent (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=298a5b96:14926:21)
+at beginWork (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=298a5b96:15914:22)
+at HTMLUnknownElement.callCallback2 (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=298a5b96:3674:22)
+at Object.invokeGuardedCallbackDev (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=298a5b96:3699:24)
+at invokeGuardedCallback (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=298a5b96:3733:39)
+at beginWork$1 (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=298a5b96:19765:15)
+at performUnitOfWork (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=298a5b96:19198:20)
+The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://2773622a-db9a-40cb-819b-59f7c97edcdc-00-1sl3aw66an0ke.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a33b9a4c:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
