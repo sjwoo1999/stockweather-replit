@@ -10,7 +10,7 @@ import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import Portfolio from "@/pages/Portfolio";
 import StockAnalysis from "@/pages/StockAnalysis";
-import WeatherCorrelation from "@/pages/WeatherCorrelation";
+import MarketWeather from "@/pages/MarketWeather";
 import DartDisclosures from "@/pages/DartDisclosures";
 import Settings from "@/pages/Settings";
 import Layout from "@/components/Layout";
@@ -35,7 +35,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/portfolio" component={Portfolio} />
           <Route path="/analysis" component={StockAnalysis} />
-          <Route path="/weather" component={WeatherCorrelation} />
+          <Route path="/weather" component={MarketWeather} />
           <Route path="/dart" component={DartDisclosures} />
           <Route path="/settings" component={Settings} />
         </Layout>
