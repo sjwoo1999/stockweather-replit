@@ -56,6 +56,7 @@ StockWeather는 복잡한 주식 시장 정보를 직관적인 날씨 예보 스
 - **Users**: Basic profile information from Replit Auth
 - **Portfolios**: User-created investment portfolios
 - **Stock Holdings**: Individual stock positions with confidence levels
+- **Stock Master**: Complete Korean stock market database (95+ companies)
 - **Stock Prices**: Historical and real-time price data
 - **Weather Data**: Weather metrics for correlation analysis
 - **Weather Correlations**: Calculated correlations between weather and stock performance
@@ -148,6 +149,7 @@ StockWeather는 복잡한 주식 시장 정보를 직관적인 날씨 예보 스
 
 ```
 Changelog:
+- July 06, 2025. 한국 증시 검색 시스템 대폭 개선 - 95개 종목 확장, 다중 검색 패턴 지원
 - July 06, 2025. PC 네비게이션 문제 해결 - 클릭 이벤트 처리 개선, CSS 스타일 간섭 제거
 - July 05, 2025. Initial setup
 ```
