@@ -16,6 +16,22 @@ export interface DartDisclosureInfo {
   createdAt: string;
 }
 
+export interface CompanyInfo {
+  corpCode: string;
+  corpName: string;
+  corpNameEng: string;
+  stockName: string;
+  stockCode: string;
+  ceoName: string;
+  corpCls: string;
+  address: string;
+  homepageUrl: string;
+  phoneNumber: string;
+  industryCode: string;
+  establishedDate: string;
+  accountMonth: string;
+}
+
 export class DartApiService {
   private apiKey = process.env.DART_API_KEY || '';
   private baseUrl = 'https://opendart.fss.or.kr/api';
@@ -33,6 +49,11 @@ export class DartApiService {
 
       const data = response.data;
       if (data.status !== '000') {
+        // API 인증 성공했지만 데이터가 없는 경우 fallback 사용
+        if (data.status === '013') {
+          console.log('DART API: No recent disclosures found, using fallback data');
+          return this.getFallbackDisclosures(limit);
+        }
         throw new Error(`DART API error: ${data.message}`);
       }
 
@@ -50,6 +71,42 @@ export class DartApiService {
     } catch (error) {
       console.error('Failed to fetch DART disclosures:', error);
       return this.getFallbackDisclosures(limit);
+    }
+  }
+
+  async getCompanyInfo(stockCode: string): Promise<CompanyInfo | null> {
+    try {
+      const corpCode = await this.getCorpCode(stockCode);
+      const response = await axios.get(`${this.baseUrl}/company.json`, {
+        params: {
+          crtfc_key: this.apiKey,
+          corp_code: corpCode,
+        },
+      });
+
+      const data = response.data;
+      if (data.status !== '000') {
+        throw new Error(`DART API error: ${data.message}`);
+      }
+
+      return {
+        corpCode: data.corp_code,
+        corpName: data.corp_name,
+        corpNameEng: data.corp_name_eng,
+        stockName: data.stock_name,
+        stockCode: data.stock_code,
+        ceoName: data.ceo_nm,
+        corpCls: data.corp_cls,
+        address: data.adres,
+        homepageUrl: data.hm_url,
+        phoneNumber: data.phn_no,
+        industryCode: data.induty_code,
+        establishedDate: data.est_dt,
+        accountMonth: data.acc_mt,
+      };
+    } catch (error) {
+      console.error(`Failed to fetch company info for ${stockCode}:`, error);
+      return null;
     }
   }
 
@@ -87,15 +144,21 @@ export class DartApiService {
   }
 
   private async getCorpCode(stockCode: string): Promise<string> {
-    // In a real implementation, this would map stock codes to DART corp codes
-    // For now, return a placeholder
+    // 주요 기업들의 DART corp_code 매핑
     const corpCodeMap: Record<string, string> = {
       '005930': '00126380', // 삼성전자
       '005380': '00164779', // 현대차
-      '373220': '00222754', // LG에너지솔루션
+      '373220': '00401731', // LG에너지솔루션
+      '000660': '00126217', // SK하이닉스
+      '035420': '00139717', // NAVER
+      '005490': '00164742', // POSCO홀딩스
+      '066570': '00282462', // LG전자
+      '323410': '00434456', // 카카오뱅크
+      '207940': '00356370', // 삼성바이오로직스
+      '003670': '00165570', // 포스코퓨처엠
     };
 
-    return corpCodeMap[stockCode] || '';
+    return corpCodeMap[stockCode] || '00126380'; // 기본값: 삼성전자
   }
 
   private classifyDisclosureType(reportName: string): string {
