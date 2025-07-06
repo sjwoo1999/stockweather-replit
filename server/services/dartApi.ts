@@ -5,6 +5,7 @@ import { promisify } from 'util';
 const parseXml = promisify(parseString);
 
 export interface DartDisclosureInfo {
+  id: string;
   stockCode: string;
   companyName: string;
   title: string;
@@ -12,6 +13,7 @@ export interface DartDisclosureInfo {
   submittedDate: Date;
   url: string;
   summary?: string;
+  createdAt: string;
 }
 
 export class DartApiService {
@@ -35,6 +37,7 @@ export class DartApiService {
       }
 
       return data.list.map((item: any) => ({
+        id: item.rcept_no || `${item.corp_name}-${item.rcept_dt}-${Math.random()}`,
         stockCode: item.stock_code || '',
         companyName: item.corp_name,
         title: item.report_nm,
@@ -42,6 +45,7 @@ export class DartApiService {
         submittedDate: new Date(item.rcept_dt),
         url: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
         summary: item.rm || '',
+        createdAt: new Date().toISOString()
       }));
     } catch (error) {
       console.error('Failed to fetch DART disclosures:', error);
@@ -66,6 +70,7 @@ export class DartApiService {
       }
 
       return data.list.map((item: any) => ({
+        id: item.rcept_no || `${stockCode}-${item.rcept_dt}-${Math.random()}`,
         stockCode: stockCode,
         companyName: item.corp_name,
         title: item.report_nm,
@@ -73,6 +78,7 @@ export class DartApiService {
         submittedDate: new Date(item.rcept_dt),
         url: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
         summary: item.rm || '',
+        createdAt: new Date().toISOString()
       }));
     } catch (error) {
       console.error(`Failed to fetch DART disclosures for ${stockCode}:`, error);
@@ -103,6 +109,7 @@ export class DartApiService {
   private getFallbackDisclosures(limit: number): DartDisclosureInfo[] {
     const fallbackData: DartDisclosureInfo[] = [
       {
+        id: 'fallback-005930-20240115',
         stockCode: '005930',
         companyName: '삼성전자',
         title: '분기보고서',
@@ -110,8 +117,10 @@ export class DartApiService {
         submittedDate: new Date('2024-01-15'),
         url: 'https://dart.fss.or.kr',
         summary: '2023년 4분기 실적 발표',
+        createdAt: new Date().toISOString()
       },
       {
+        id: 'fallback-005380-20240114',
         stockCode: '005380',
         companyName: '현대차',
         title: '주요사항보고서',
@@ -119,8 +128,10 @@ export class DartApiService {
         submittedDate: new Date('2024-01-14'),
         url: 'https://dart.fss.or.kr',
         summary: '신규 투자 계획 발표',
+        createdAt: new Date().toISOString()
       },
       {
+        id: 'fallback-373220-20240113',
         stockCode: '373220',
         companyName: 'LG에너지솔루션',
         title: '공정공시',
@@ -128,6 +139,7 @@ export class DartApiService {
         submittedDate: new Date('2024-01-13'),
         url: 'https://dart.fss.or.kr',
         summary: '배터리 생산 확대 계획',
+        createdAt: new Date().toISOString()
       },
     ];
 

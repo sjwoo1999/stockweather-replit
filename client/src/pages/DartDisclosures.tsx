@@ -23,11 +23,11 @@ export default function DartDisclosures() {
   const [selectedType, setSelectedType] = useState("all");
   const [selectedStock, setSelectedStock] = useState("");
 
-  const { data: recentDisclosures, isLoading } = useQuery({
+  const { data: recentDisclosures, isLoading } = useQuery<DartDisclosure[]>({
     queryKey: ["/api/dart/recent", { limit: 50 }],
   });
 
-  const { data: stockDisclosures } = useQuery({
+  const { data: stockDisclosures } = useQuery<DartDisclosure[]>({
     queryKey: [`/api/dart/stock/${selectedStock}`, { limit: 20 }],
     enabled: !!selectedStock,
   });
@@ -74,7 +74,7 @@ export default function DartDisclosures() {
     return `${Math.floor(diffInDays / 30)}개월 전`;
   };
 
-  const filteredDisclosures = recentDisclosures?.filter((disclosure: DartDisclosure) => {
+  const filteredDisclosures = Array.isArray(recentDisclosures) ? recentDisclosures.filter((disclosure: DartDisclosure) => {
     const matchesSearch = !searchQuery || 
       disclosure.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       disclosure.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -83,14 +83,14 @@ export default function DartDisclosures() {
     const matchesType = selectedType === 'all' || disclosure.type === selectedType;
     
     return matchesSearch && matchesType;
-  }) || [];
+  }) : [];
 
   const disclosureStats = {
-    total: recentDisclosures?.length || 0,
-    quarterly: recentDisclosures?.filter((d: DartDisclosure) => d.type === 'quarterly').length || 0,
-    annual: recentDisclosures?.filter((d: DartDisclosure) => d.type === 'annual').length || 0,
-    material: recentDisclosures?.filter((d: DartDisclosure) => d.type === 'material').length || 0,
-    fair: recentDisclosures?.filter((d: DartDisclosure) => d.type === 'fair_disclosure').length || 0,
+    total: Array.isArray(recentDisclosures) ? recentDisclosures.length : 0,
+    quarterly: Array.isArray(recentDisclosures) ? recentDisclosures.filter((d: DartDisclosure) => d.type === 'quarterly').length : 0,
+    annual: Array.isArray(recentDisclosures) ? recentDisclosures.filter((d: DartDisclosure) => d.type === 'annual').length : 0,
+    material: Array.isArray(recentDisclosures) ? recentDisclosures.filter((d: DartDisclosure) => d.type === 'material').length : 0,
+    fair: Array.isArray(recentDisclosures) ? recentDisclosures.filter((d: DartDisclosure) => d.type === 'fair_disclosure').length : 0,
   };
 
   return (
@@ -213,9 +213,9 @@ export default function DartDisclosures() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {filteredDisclosures.map((disclosure: DartDisclosure) => (
+                      {filteredDisclosures.map((disclosure: DartDisclosure, index: number) => (
                         <div 
-                          key={disclosure.id} 
+                          key={disclosure.id || `disclosure-${index}-${disclosure.stockCode}-${disclosure.submittedDate}`} 
                           className="p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-start justify-between">
@@ -292,7 +292,7 @@ export default function DartDisclosures() {
                     />
                   </div>
                   
-                  {stockDisclosures && (
+                  {Array.isArray(stockDisclosures) && stockDisclosures.length > 0 && (
                     <div className="space-y-4">
                       {stockDisclosures.map((disclosure: DartDisclosure) => (
                         <div 
@@ -405,27 +405,27 @@ export default function DartDisclosures() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">신규 공시</span>
                 <span className="font-medium">
-                  {recentDisclosures?.filter((d: DartDisclosure) => 
+                  {Array.isArray(recentDisclosures) ? recentDisclosures.filter((d: DartDisclosure) => 
                     new Date(d.submittedDate).toDateString() === new Date().toDateString()
-                  ).length || 0}건
+                  ).length : 0}건
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">중요 공시</span>
                 <span className="font-medium text-accent">
-                  {recentDisclosures?.filter((d: DartDisclosure) => 
+                  {Array.isArray(recentDisclosures) ? recentDisclosures.filter((d: DartDisclosure) => 
                     d.type === 'material' && 
                     new Date(d.submittedDate).toDateString() === new Date().toDateString()
-                  ).length || 0}건
+                  ).length : 0}건
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">공정공시</span>
                 <span className="font-medium text-warning">
-                  {recentDisclosures?.filter((d: DartDisclosure) => 
+                  {Array.isArray(recentDisclosures) ? recentDisclosures.filter((d: DartDisclosure) => 
                     d.type === 'fair_disclosure' && 
                     new Date(d.submittedDate).toDateString() === new Date().toDateString()
-                  ).length || 0}건
+                  ).length : 0}건
                 </span>
               </div>
             </CardContent>
@@ -438,10 +438,10 @@ export default function DartDisclosures() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {Array.from(new Set(recentDisclosures?.map((d: DartDisclosure) => d.companyName) || []))
+                {Array.from(new Set(Array.isArray(recentDisclosures) ? recentDisclosures.map((d: DartDisclosure) => d.companyName) : []))
                   .slice(0, 5)
                   .map((company, index) => {
-                    const companyDisclosures = recentDisclosures?.filter((d: DartDisclosure) => d.companyName === company) || [];
+                    const companyDisclosures = Array.isArray(recentDisclosures) ? recentDisclosures.filter((d: DartDisclosure) => d.companyName === company) : [];
                     return (
                       <div key={`company-${company}-${index}`} className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
