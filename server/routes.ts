@@ -54,6 +54,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/portfolios/:id/sample-data', isAuthenticated, async (req: any, res) => {
+    try {
+      const portfolioId = req.params.id;
+      
+      // 샘플 종목 데이터 (실제 한국 주요 종목)
+      const sampleStocks = [
+        {
+          stockCode: "005930",
+          stockName: "삼성전자",
+          shares: 50,
+          averagePrice: 71500,
+          confidenceLevel: 85,
+          currentPrice: 74800,
+        },
+        {
+          stockCode: "000660",
+          stockName: "SK하이닉스",
+          shares: 30,
+          averagePrice: 125000,
+          confidenceLevel: 75,
+          currentPrice: 128500,
+        },
+        {
+          stockCode: "373220",
+          stockName: "LG에너지솔루션",
+          shares: 20,
+          averagePrice: 420000,
+          confidenceLevel: 60,
+          currentPrice: 435000,
+        },
+        {
+          stockCode: "207940",
+          stockName: "삼성바이오로직스",
+          shares: 5,
+          averagePrice: 850000,
+          confidenceLevel: 70,
+          currentPrice: 865000,
+        },
+        {
+          stockCode: "005490",
+          stockName: "POSCO홀딩스",
+          shares: 15,
+          averagePrice: 385000,
+          confidenceLevel: 65,
+          currentPrice: 392000,
+        }
+      ];
+
+      const createdHoldings = [];
+      for (const stock of sampleStocks) {
+        const holdingData = insertStockHoldingSchema.parse({
+          ...stock,
+          portfolioId,
+        });
+        const holding = await storage.addStockHolding(holdingData);
+        createdHoldings.push(holding);
+      }
+
+      res.json({ 
+        message: "Sample data added successfully",
+        holdings: createdHoldings,
+        count: createdHoldings.length
+      });
+    } catch (error) {
+      console.error("Error adding sample data:", error);
+      res.status(500).json({ message: "Failed to add sample data" });
+    }
+  });
+
   app.get('/api/portfolios/:id', isAuthenticated, async (req: any, res) => {
     try {
       const portfolio = await storage.getPortfolio(req.params.id);
